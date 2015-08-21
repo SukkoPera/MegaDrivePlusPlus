@@ -619,19 +619,21 @@ inline byte read_pad () {
    * - Pin 9 (Start/C) -> PA2
    */
 
-  // FIXME: Convert masks to PINAx format
-
   // Update UP and DOWN, which are always valid and on PORTB alone
-  pad_status = (pad_status & 0xFC) | (~PINB & 0x03);
+  pad_status = (pad_status & 0xFC) | (~PINB & ((1 << PINB1) | (1 << PINB0)));
 
   // Then deal with the rest
   byte porta = PINA;
   if (porta & (1 << PINA6)) {
     // Select is high, we have C & B
-    pad_status = (pad_status & 0xCF) | ((~porta & 0x06) << 3);
+    pad_status = (pad_status & 0xCF)
+               | ((~porta & ((1 << PINA2) | (1 << PINA1))) << 3)
+               ;
   } else {
     // Select is low, we have Start & A
-    pad_status = (pad_status & 0x3F) | ((~porta & 0x06) << 5);
+    pad_status = (pad_status & 0x3F)
+               | ((~porta & ((1 << PINA2) | (1 << PINA1))) << 5)
+               ;
   }
 #elif defined __AVR_ATtinyX61__
   /*
