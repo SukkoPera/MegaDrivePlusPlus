@@ -74,8 +74,7 @@
  * PLATFORM SELECTION
  ******************************************************************************/
 
-//#if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
-#if defined ATTINYX5
+#if defined __AVR_ATtinyX5__
 /*
  * On ATtinyX5 we only support Reset-From-Pad.
  *                  ,-----_-----.
@@ -87,8 +86,8 @@
  */
 #define RESET_IN_PIN 3
 #define RESET_OUT_PIN 4
-//#elif defined(__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__)
-#elif defined ATTINYX4
+
+#elif defined __AVR_ATtinyX4__
 /*
  * On ATtinyX4 most features are supported. The only exception is that RIGHT and
  * LEFT cannot be used in combos.
@@ -116,7 +115,7 @@
 #define MODE_LED_G_PIN 3
 // No blue pin!
 
-#elif defined ATTINYX61
+#elif defined __AVR_ATtinyX61__
 /*
  * On ATtinyX61 all features are supported. We even read all buttons with a
  * single instruction.
@@ -230,13 +229,13 @@ enum PadButton {
  */
 #define RESET_COMBO (MD_BTN_A | MD_BTN_C)
 
-#if defined ATTINYX4
+#if defined __AVR_ATtinyX4__
   /* On ATtinyX4's we can't use LEFT and RIGHT, so just use UP and DOWN to
    * cycle through modes
    */
   #define NEXT_MODE_COMBO MD_BTN_DOWN
   #define PREV_MODE_COMBO MD_BTN_UP
-#elif defined ATTINYX61 || defined ARDUINO328
+#elif defined __AVR_ATtinyX61__ || defined ARDUINO328
   /* On ATtinyX61 and Arduino's we can detect all buttons, so we can make up a
    * specific combo for every mode.
    */
@@ -250,7 +249,7 @@ enum PadButton {
  * ADVANCED SETTINGS
  ******************************************************************************/
 
-#if !defined ATTINYX5
+#if !defined __AVR_ATtinyX5__
 /* Offset in the EEPROM at which the current mode should be saved. Undefine to
  * disable mode saving.
  */
@@ -259,7 +258,7 @@ enum PadButton {
 // Time to wait after mode change before saving the new mode (milliseconds)
 #define MODE_SAVE_DELAY 10000
 
-#endif // !ATTINYX5
+#endif // !__AVR_ATtinyX5__
 
 /* Colors to use to indicate the video mode, in 8-bit RGB componentes. You can
  * use any value here if your led is connected to PWM-capable pins, otherwise
@@ -273,7 +272,7 @@ enum PadButton {
  *
  * Oh, and good luck trying to fit a 5mm RGB led in the MegaDrive ;).
  */
-#if defined ATTINYX4
+#if defined __AVR_ATtinyX4__
 /* We only have two LED pins, so let's use a dual-color led and stick to the
  * D4s/Seb colors
  */
@@ -281,7 +280,7 @@ enum PadButton {
 #define MODE_LED_USA_COLOR {0xFF, 0xFF}  // Orange
 #define MODE_LED_JAP_COLOR {0xFF, 0x00}  // Red
 
-#elif !defined ATTINYX5
+#elif !defined __AVR_ATtinyX5__
 
 #define MODE_LED_EUR_COLOR {0x00, 0xFF, 0x00}  // Green
 #define MODE_LED_USA_COLOR {0x00, 0x00, 0xFF}  // Blue
@@ -363,7 +362,7 @@ void save_mode () {
 #endif
 }
 
-#if !defined ATTINYX5
+#if !defined __AVR_ATtinyX5__
 void change_mode (int increment) {
   // This also loops in [0, MODES_NO) backwards
   VideoMode new_mode = static_cast<VideoMode> ((current_mode + increment + MODES_NO) % MODES_NO);
@@ -467,7 +466,7 @@ void handle_reset_button () {
         debugln ("Reset button pushed for a short time");
         reset_console ();
       }
-#if !defined ATTINYX5
+#if !defined __AVR_ATtinyX5__
     } else {
       // Button has not just been pressed/released
       if (reset_pressed_now && millis () % reset_press_start >= LONGPRESS_LEN * (hold_cycles + 1)) {
@@ -531,7 +530,7 @@ void setup () {
   pinMode (PAD_LED_PIN, OUTPUT);
 #endif
 
-#if !defined ATTINYX5
+#if !defined __AVR_ATtinyX5__
   // Init video mode
   pinMode (VIDEOMODE_PIN, OUTPUT);
   pinMode (LANGUAGE_PIN, OUTPUT);
@@ -555,12 +554,12 @@ void setup () {
 
 void setup_pad () {
   // Set port directions
-#if defined ATTINYX5
+#if defined __AVR_ATtinyX5__
   DDRB &= ~((1 << DDB2) | (1 << DDB1) | (1 << DDB0));
-#elif defined ATTINYX4
+#elif defined __AVR_ATtinyX4__
   DDRA &= ~((1 << DDA6) | (1 << DDA2) | (1 << DDA1));
   DDRB &= ~((1 << DDB1) | (1 << DDB0));
-#elif defined ATTINYX61
+#elif defined __AVR_ATtinyX61__
   DDRA &= ~((1 << DDA6) | (1 << DDA5) | (1 << DDA4) | (1 << DDA3) | (1 << DDA2) | (1 << DDA1) | (1 << DDA0));
 #elif defined ARDUINO328
   DDRC &= ~((1 << DDC1) | (1 << DDC0));
@@ -586,7 +585,7 @@ void setup_pad () {
 inline byte read_pad () {
   static byte pad_status = 0;
 
-#if defined ATTINYX5
+#if defined __AVR_ATtinyX5__
   /*
    * On ATtinyX4's all we can do is read A/B and Start/C together with SELECT:
    * - Pin 6 (A/B) -> PB0
@@ -603,7 +602,7 @@ inline byte read_pad () {
     pad_status = (pad_status & 0x3F)
                | ((~portb & ((1 << PINB1) | (1 << PINB0))) << 6);
   }
-#elif defined ATTINYX4
+#elif defined __AVR_ATtinyX4__
   /*
    * On ATtinyX4's we read A/B and Start/C together with SELECT through PORTA.
    * Then we read UP and DOWN through PORTB.
@@ -634,7 +633,7 @@ inline byte read_pad () {
     // Select is low, we have Start & A
     pad_status = (pad_status & 0x3F) | ((~porta & 0x06) << 5);
   }
-#elif defined ATTINYX61
+#elif defined __AVR_ATtinyX61__
   /*
    * On ATtinyX61 we have all the buttons on a single port, so we can read all
    * of them at once. We still have to play a bit with the bits (pun intended)
