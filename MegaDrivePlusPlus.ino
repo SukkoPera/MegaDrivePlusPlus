@@ -256,7 +256,7 @@ enum PadButton {
 #define MODE_ROM_OFFSET 42
 
 // Time to wait after mode change before saving the new mode (milliseconds)
-#define MODE_SAVE_DELAY 10000
+#define MODE_SAVE_DELAY 5000L
 
 #endif // !__AVR_ATtinyX5__
 
