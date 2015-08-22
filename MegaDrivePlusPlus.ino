@@ -447,23 +447,24 @@ void set_mode (VideoMode m) {
 #endif
 
 void handle_reset_button () {
-  static byte reset_pressed_before = reset_inactive_level, debounce_state = LOW;
+  static byte debounce_level = LOW;
+  static bool reset_pressed_before = false;
   static long last_int = 0, reset_press_start = 0;
   static unsigned int hold_cycles = 0;
 
-  byte reset_pressed_now = digitalRead (RESET_IN_PIN);
-  if (reset_pressed_now != debounce_state) {
+  byte reset_level = digitalRead (RESET_IN_PIN);
+  if (reset_level != debounce_level) {
     // Reset debouncing timer
     last_int = millis ();
-    debounce_state = reset_pressed_now;
+    debounce_level = reset_level;
   } else if (millis () - last_int > DEBOUNCE_MS) {
     // OK, button is stable, see if it has changed
-    if (reset_pressed_now && !reset_pressed_before) {
+    if (reset_level != reset_inactive_level && !reset_pressed_before) {
       // Button just pressed
       reset_press_start = millis ();
       hold_cycles = 0;
     }
-    else if (!reset_pressed_now && reset_pressed_before) {
+    else if (reset_level == reset_inactive_level && reset_pressed_before) {
       // Button released
       if (hold_cycles == 0) {
         debugln ("Reset button pushed for a short time");
@@ -472,7 +473,7 @@ void handle_reset_button () {
 #if !defined __AVR_ATtinyX5__
     } else {
       // Button has not just been pressed/released
-      if (reset_pressed_now && millis () % reset_press_start >= LONGPRESS_LEN * (hold_cycles + 1)) {
+      if (reset_level != reset_inactive_level && millis () % reset_press_start >= LONGPRESS_LEN * (hold_cycles + 1)) {
         // Reset has been hold for a while
         debugln ("Reset button hold");
         ++hold_cycles;
@@ -481,7 +482,7 @@ void handle_reset_button () {
 #endif
     }
 
-    reset_pressed_before = reset_pressed_now;
+    reset_pressed_before = (reset_level != reset_inactive_level);
   }
 }
 
