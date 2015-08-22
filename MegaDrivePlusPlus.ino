@@ -352,10 +352,13 @@ byte reset_inactive_level;
 void save_mode () {
 #ifdef MODE_ROM_OFFSET
   if (mode_last_changed_time > 0 && millis () - mode_last_changed_time >= MODE_SAVE_DELAY) {
-    debugln ("Saving video mode to EEPROM");
+    debug ("Saving video mode to EEPROM: ");
+    debugln (current_mode);
     byte saved_mode = EEPROM.read (MODE_ROM_OFFSET);
     if (current_mode != saved_mode) {
       EEPROM.write (MODE_ROM_OFFSET, static_cast<byte> (current_mode));
+    } else {
+      debugln ("Mode unchanged, not saving");
     }
     mode_last_changed_time = 0;    // Don't save again
   }
@@ -537,12 +540,15 @@ void setup () {
   current_mode = EUR;
 #ifdef MODE_ROM_OFFSET
   byte tmp = EEPROM.read (MODE_ROM_OFFSET);
+  debug ("Loaded video mode from EEPROM: ");
+  debugln (tmp);
   if (tmp < MODES_NO) {
     // Palette EEPROM value is good
     current_mode = static_cast<VideoMode> (tmp);
   }
 #endif
   set_mode (current_mode);
+  mode_last_changed_time = 0;   // No need to save what we just loaded
 #endif
 
   // Prepare to read pad
