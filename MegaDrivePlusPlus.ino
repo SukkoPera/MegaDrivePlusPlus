@@ -396,7 +396,7 @@ void update_mode_leds () {
   byte c;
 
 #ifdef MODE_LED_R_PIN
-  c = constrain (colors[0], 0, 255);
+  c = colors[0];
 #ifdef MODE_LED_COMMON_ANODE
   c = 255 - c;
 #endif
@@ -404,7 +404,7 @@ void update_mode_leds () {
 #endif
 
 #ifdef MODE_LED_G_PIN
-  c = constrain (colors[1], 0, 255);
+  c = colors[1];
 #ifdef MODE_LED_COMMON_ANODE
   c = 255 - c;
 #endif
@@ -412,7 +412,7 @@ void update_mode_leds () {
 #endif
 
 #ifdef MODE_LED_B_PIN
-  c = constrain (colors[2], 0, 255);
+  c = colors[2];
 #ifdef MODE_LED_COMMON_ANODE
   c = 255 - c;
 #endif
