@@ -294,6 +294,13 @@ enum PadButton {
 // Define this if your led is common-anode, comment out for common-cathode
 //#define MODE_LED_COMMON_ANODE
 
+/* Use a single led to indicate the video mode. This is blinked 1-3 times
+ * according to which mode is set (1 is EUR, see enum VideoMode below). This
+ * does NOT disable the multi-colored led and can be used together with it,
+ * provided that you have enough pins. Otherwise please disable it manually.
+ */
+//#define MODE_LED_SINGLE_PIN 3
+
 /* Presses of the reset button longer than this amount of milliseconds will
  * switch to the next mode, shorter presses will reset the console.
  */
@@ -416,7 +423,7 @@ void update_mode_leds () {
 
 #ifdef MODE_LED_SINGLE_PIN
   // WARNING: This loop must be reasonably shorter than LONGPRESS_LEN in the worst case!
-  for (int i = 0; i < palette + 1; ++i) {
+  for (int i = 0; i < current_mode + 1; ++i) {
     digitalWrite (MODE_LED_SINGLE_PIN, LOW);
     delay (40);
     digitalWrite (MODE_LED_SINGLE_PIN, HIGH);
