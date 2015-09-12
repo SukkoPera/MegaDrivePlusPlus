@@ -258,6 +258,9 @@ enum PadButton {
 // Time to wait after mode change before saving the new mode (milliseconds)
 #define MODE_SAVE_DELAY 5000L
 
+// Force the reset line level when active. Undefine to enable auto-detection.
+//#define FORCE_RESET_ACTIVE_LEVEL LOW
+
 #endif // !__AVR_ATtinyX5__
 
 /* Colors to use to indicate the video mode, in 8-bit RGB componentes. You can
@@ -469,7 +472,7 @@ void handle_reset_button () {
       if (hold_cycles == 0) {
         debugln ("Reset button pushed for a short time");
         reset_console ();
-      }
+    }
 #if !defined __AVR_ATtinyX5__
     } else {
       // Button has not just been pressed/released
@@ -501,17 +504,39 @@ void setup () {
 
   debugln ("Starting up...");
 
+/* Rant: As per D4s's installation schematics out there (which we use too), it
+ * seems that on consoles with an active low reset signal, the Reset In input
+ * is taken before the pull-up resistor, while on consoles with active-high
+ * reset it is taken AFTER the pull-down resistor. This means that detecting
+ * the reset level by sampling the same line on both consoles is tricky, as in
+ * both cases one of the Reset In/Out signals is left floating :(. The
+ * following should work reliably, but we allow for a way to force the reset
+ * line level.
+ */
+#ifndef FORCE_RESET_ACTIVE_LEVEL
   // Let things settle down and then sample the reset line
   delay (100);
-  pinMode (RESET_IN_PIN, INPUT);
+  pinMode (RESET_IN_PIN, INPUT_PULLUP);
   reset_inactive_level = digitalRead (RESET_IN_PIN);
+  debug ("Reset line is ");
+  debug (reset_inactive_level ? "HIGH" : "LOW");
+  debugln (" at startup");
+#else
+  reset_inactive_level = !FORCE_RESET_ACTIVE_LEVEL;
+  debug ("Reset line is forced to active-");
+  debugln (FORCE_RESET_ACTIVE_LEVEL ? "HIGH" : "LOW");
+#endif
+
+  if (reset_inactive_level == LOW) {
+    // No need for pull-up
+    pinMode (RESET_IN_PIN, INPUT);
+  } else {
+    pinMode (RESET_IN_PIN, INPUT_PULLUP);
+  }
 
   // Enable reset
   pinMode (RESET_OUT_PIN, OUTPUT);
   digitalWrite (RESET_OUT_PIN, !reset_inactive_level);
-  debug ("Reset line is ");
-  debug (reset_inactive_level ? "HIGH" : "LOW");
-  debugln (" at startup");
 
   // Setup leds
 #ifdef MODE_LED_R_PIN
