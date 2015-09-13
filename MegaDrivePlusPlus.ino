@@ -371,8 +371,52 @@ void save_mode () {
       debugln ("Mode unchanged, not saving");
     }
     mode_last_changed_time = 0;    // Don't save again
-  }
+
+    // Blink led to tell the user that mode was saved
+#ifdef ENABLE_MODE_LED_RGB
+    byte c;
+
+#ifdef MODE_LED_R_PIN
+    c = 0;
+#ifdef MODE_LED_COMMON_ANODE
+    c = 255 - c;
 #endif
+    analogWrite (MODE_LED_R_PIN, c);
+#endif
+
+#ifdef MODE_LED_G_PIN
+    c = 0;
+#ifdef MODE_LED_COMMON_ANODE
+    c = 255 - c;
+#endif
+    analogWrite (MODE_LED_G_PIN, c);
+#endif
+
+#ifdef MODE_LED_B_PIN
+    c = 0;
+#ifdef MODE_LED_COMMON_ANODE
+    c = 255 - c;
+#endif
+    analogWrite (MODE_LED_B_PIN, c);
+#endif
+
+    // Keep off for a bit
+    delay (200);
+  
+    // Turn led back on
+    update_mode_leds ();
+#endif  // ENABLE_MODE_LED_RGB
+
+#ifdef MODE_LED_SINGLE_PIN
+    // Make one long flash
+    for (int i = 0; i < current_mode + 1; ++i) {
+      digitalWrite (MODE_LED_SINGLE_PIN, LOW);
+      delay (500);
+      digitalWrite (MODE_LED_SINGLE_PIN, HIGH);
+    }
+#endif
+  }
+#endif  // MODE_ROM_OFFSET
 }
 
 #if !defined __AVR_ATtinyX5__
