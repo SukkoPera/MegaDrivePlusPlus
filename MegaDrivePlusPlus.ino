@@ -145,10 +145,9 @@
 #define MODE_LED_G_PIN 6
 #define MODE_LED_B_PIN 4
 
-#elif defined __AVR_ATmega328P__
-/* || defined __AVR_ATmega2560__ */     // Mmmmh... I bet we can find a better constant to check for
-
-/* Arduino Uno/Nano/Micro/Whatever, use a convenience #define till we come up
+#elif defined __AVR_ATmega328__ || defined __AVR_ATmega328P__ || defined __AVR_ATmega168__
+/* 
+ * Arduino Uno/Nano/Micro/Whatever, use a convenience #define till we come up
  * with something better
  */
 #define ARDUINO328
