@@ -193,8 +193,8 @@ enum PadButton {
   #define PREV_MODE_COMBO MD_BTN_UP
 #elif defined __AVR_ATtinyX61__ || defined ARDUINO328
   /* On ATtinyX61's and Arduinos we can detect all buttons, so we can make up a
-   * specific combo for every mode that switches straight to it, no need for
-   * cycling between modes.
+   * specific combo for every mode that switches straight to it, no need to
+   * cycle among modes.
    */
   #define EUR_COMBO MD_BTN_DOWN
   #define USA_COMBO MD_BTN_RIGHT
