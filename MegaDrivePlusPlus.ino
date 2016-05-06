@@ -33,7 +33,7 @@
 
 #if defined __AVR_ATtinyX5__
 /*
- * On ATtinyX5 we only support Reset-From-Pad.
+ * On ATtinyX5's we only support Reset-From-Pad.
  *                  ,-----_-----.
  *                  |1 (5)     8| +5V
  *         Reset In |2   3  2  7| Pad Port Pin 7
@@ -46,8 +46,8 @@
 
 #elif defined __AVR_ATtinyX4__
 /*
- * On ATtinyX4 most features are supported. The only exception is that RIGHT and
- * LEFT cannot be used in combos.
+ * On ATtinyX4's most features are supported. The only exception is that RIGHT
+ * and LEFT cannot be used in combos.
  *
  * The connection layout is derived from that of the Seb/D4s mod, so that if you
  * already have a socket wired properly in you console, you will just need to
@@ -74,7 +74,7 @@
 
 #elif defined __AVR_ATtinyX61__
 /*
- * On ATtinyX61 all features are supported. We even read all buttons with a
+ * On ATtinyX61's all features are supported. We even read all buttons with a
  * single instruction.
  *
  * The connection layout puts the SELECT signal on the INT1 pin. This will
@@ -114,10 +114,10 @@
  * no port fully available, so we resort again to reading UP and DOWN from a
  * different port. Technically we could use PORTD, but since working on a full
  * Arduino board is mainly useful to get debugging messages through the serial
- * port, we don't do that. But if you put a single ATmega328 on a board and use
- * its internal clock you also get PORTB, so we might support that in the
- * future. On a side note, PORTD also has INT1 on pin2, so we could easily use
- * the X61 read function...
+ * port, we don't do that (PD0 and PD1 are used by the hardware serial port).
+ * But if you put a single ATmega328 on a board and use its internal clock you
+ * also get PORTB, so we might support that in the future. On a side note, PORTD
+ * also has INT1 on pin2, so we could easily use the X61 read function...
  *
  *                    ,-----_-----.
  *                    |1     A5 28| JP1/2 (Language)
