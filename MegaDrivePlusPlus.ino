@@ -1,7 +1,7 @@
 /*******************************************************************************
  * This file is part of MegaDrive++.                                           *
  *                                                                             *
- * Copyright (C) 2015 by SukkoPera                                             *
+ * Copyright (C) 2015-2016 by SukkoPera <software@sukkology.net>               *
  *                                                                             *
  * MegaDrive++ is free software: you can redistribute it and/or modify         *
  * it under the terms of the GNU General Public License as published by        *
@@ -19,8 +19,6 @@
  *
  * MegaDrive++ - Universal Region mod, 50/60 Hz switch and In-Game-Reset (IGR)
  * for Sega Mega Drive (AKA Genesis) 
- * 
- * Copyright (C) 2015bBy SukkoPera <software@sukkology.net>
  * 
  * Please refer to the GitHub page and wiki for any information:
  * https://github.com/SukkoPera/MegaDrivePlusPlus
