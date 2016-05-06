@@ -22,4 +22,4 @@ the number of available I/O pins, please read on for details.
 - Last but not least, it is **Open Source and Free Software**!
 
 
-If you are interested to mod your console with MegaDrive++, please proceed to the [[Installation]] page!
+If you are interested in modding your console with MegaDrive++, please head to the [wiki](https://github.com/SukkoPera/MegaDrivePlusPlus/wiki). There you will find full instructions about what chip to buy, how to put MegaDrive++ on it and how to install it, with a full wiring guide for a few different Mega Drive/Genesis models that were sold.
