@@ -18,8 +18,8 @@
  *******************************************************************************
  *
  * MegaDrive++ - Universal Region mod, 50/60 Hz switch and In-Game-Reset (IGR)
- * for Sega Mega Drive (AKA Genesis) 
- * 
+ * for Sega Mega Drive (AKA Genesis)
+ *
  * Please refer to the GitHub page and wiki for any information:
  * https://github.com/SukkoPera/MegaDrivePlusPlus
  */
@@ -102,8 +102,37 @@
 #define MODE_LED_G_PIN 6
 #define MODE_LED_B_PIN 4
 
+#elif defined __AVR_ATtinyX313__
+/*
+ * On ATtinyX13's all features are supported. We even read all buttons with a
+ * single instruction.
+ *
+ * Again, the connection layout puts the SELECT signal on the INT1 pin. LED is
+ * connected to PWM-capable pins.
+ *
+ *                    ,-----_-----.
+ *                    |1 (17)   20| +5V
+ *     Pad Port Pin 1 |2   0 16 19| JP3/4 (Video Mode)
+ *     Pad Port Pin 2 |3   1 15 18| JP1/2 (Language)
+ *                    |4   2 14 17| Reset Out
+ *                    |5   3 13 16| Reset In
+ *     Pad Port Pin 7 |6   4 12 15| LED Blue
+ *     Pad Port Pin 3 |7   5 11 14| LED Green
+ *     Pad Port Pin 4 |8   6 10 13| LED Red
+ *     Pad Port Pin 6 |9   7  9 12|
+ *                GND |10(15) 8 11| Pad Port Pin 9
+ *                    `-----------'
+ */
+#define RESET_IN_PIN 13
+#define RESET_OUT_PIN 14
+#define VIDEOMODE_PIN 16
+#define LANGUAGE_PIN 15
+#define MODE_LED_R_PIN 10
+#define MODE_LED_G_PIN 11
+#define MODE_LED_B_PIN 12
+
 #elif defined __AVR_ATmega328__ || defined __AVR_ATmega328P__ || defined __AVR_ATmega168__
-/* 
+/*
  * Arduino Uno/Nano/Micro/Whatever, use a convenience #define till we come up
  * with something better
  */
@@ -359,7 +388,7 @@ void save_mode () {
 
     // Keep off for a bit
     delay (200);
-  
+
     // Turn led back on
     update_mode_leds ();
 #endif  // ENABLE_MODE_LED_RGB
@@ -695,6 +724,26 @@ inline byte read_pad () {
     pad_status = (pad_status & 0x30)
                | ((~porta & ((1 << PINA6) | (1 << PINA5))) << 1)
                | (~porta & ((1 << PINA1) | (1 << PINA0)))
+               ;
+  }
+#elif defined __AVR_ATtinyX313__
+  /*
+   * Same as above, but with port D instead of port A. SELECT is connected to
+   * INT0.
+   */
+
+  byte portd = PIND;
+  if (portd & (1 << PIND2)) {
+    // Select is high, we have the 4 directions, C & B
+    pad_status = (pad_status & 0xC0)
+               | ((~portd & ((1 << PIND6) | (1 << PIND5) | (1 << PIND4) | (1 << PIND3))) >> 1)
+               | (~portd & ((1 << PIND1) | (1 << PIND0)))
+               ;
+  } else {
+    // Select is low, we have Up, Down, Start & A
+    pad_status = (pad_status & 0x30)
+               | ((~portd & ((1 << PIND6) | (1 << PIND5))) << 1)
+               | (~portd & ((1 << PIND1) | (1 << PIND0)))
                ;
   }
 #elif defined ARDUINO328
