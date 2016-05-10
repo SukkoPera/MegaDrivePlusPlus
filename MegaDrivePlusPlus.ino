@@ -340,7 +340,7 @@ void set_mode (VideoMode m);
 
 
 VideoMode current_mode;
-long mode_last_changed_time;
+unsigned long mode_last_changed_time;
 
 // Reset level when NOT ACTIVE
 byte reset_inactive_level;
