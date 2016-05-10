@@ -360,29 +360,21 @@ void save_mode () {
 
     // Blink led to tell the user that mode was saved
 #ifdef ENABLE_MODE_LED_RGB
-    byte c;
+    byte c = 0;
 
-#ifdef MODE_LED_R_PIN
-    c = 0;
-#ifdef MODE_LED_COMMON_ANODE
+#ifdef RGB_LED_COMMON_ANODE
     c = 255 - c;
 #endif
+
+#ifdef MODE_LED_R_PIN
     analogWrite (MODE_LED_R_PIN, c);
 #endif
 
 #ifdef MODE_LED_G_PIN
-    c = 0;
-#ifdef MODE_LED_COMMON_ANODE
-    c = 255 - c;
-#endif
     analogWrite (MODE_LED_G_PIN, c);
 #endif
 
 #ifdef MODE_LED_B_PIN
-    c = 0;
-#ifdef MODE_LED_COMMON_ANODE
-    c = 255 - c;
-#endif
     analogWrite (MODE_LED_B_PIN, c);
 #endif
 
