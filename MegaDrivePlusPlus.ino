@@ -24,9 +24,6 @@
  * https://github.com/SukkoPera/MegaDrivePlusPlus
  */
 
-// For some reason, this is needed here or compilation fails :/
-#include <Arduino.h>
-
 /*******************************************************************************
  * PLATFORM SELECTION
  ******************************************************************************/
