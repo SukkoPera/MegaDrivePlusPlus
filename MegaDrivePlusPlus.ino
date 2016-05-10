@@ -307,8 +307,8 @@ enum PadButton {
 
 /* Use a single led to indicate the video mode. This is enabled automatically
  * in place of the RGB led when low flash space is detected, but since this
- * does NOT disable the RGB led, it can be used together with it,  provided that
- * you have enough pins. Otherwise please disable it manually.
+ * does NOT disable the RGB led, it can be used together with it, provided that
+ * you have a free pin.
  *
  * Basically, the single led is blinked 1-3 times according to which mode is set
  * (1 is EUR, see enum VideoMode below).
