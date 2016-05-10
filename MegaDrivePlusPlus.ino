@@ -380,11 +380,9 @@ void save_mode () {
 
 #ifdef MODE_LED_SINGLE_PIN
     // Make one long flash
-    for (int i = 0; i < current_mode + 1; ++i) {
-      digitalWrite (MODE_LED_SINGLE_PIN, LOW);
-      delay (500);
-      digitalWrite (MODE_LED_SINGLE_PIN, HIGH);
-    }
+    digitalWrite (MODE_LED_SINGLE_PIN, LOW);
+    delay (500);
+    digitalWrite (MODE_LED_SINGLE_PIN, HIGH);
 #endif
   }
 #endif  // MODE_ROM_OFFSET
