@@ -630,6 +630,8 @@ void setup_pad () {
   DDRB &= ~((1 << DDB1) | (1 << DDB0));
 #elif defined __AVR_ATtinyX61__
   DDRA &= ~((1 << DDA6) | (1 << DDA5) | (1 << DDA4) | (1 << DDA3) | (1 << DDA2) | (1 << DDA1) | (1 << DDA0));
+#elif defined __AVR_ATtinyX313__
+  DDRD &= ~((1 << DDD6) | (1 << DDD5) | (1 << DDD4) | (1 << DDD3) | (1 << DDD2) | (1 << DDD1) | (1 << DDD0));
 #elif defined ARDUINO328
   DDRC &= ~((1 << DDC1) | (1 << DDC0));
   DDRD &= ~((1 << DDD6) | (1 << DDD5) | (1 << DDD4) | (1 << DDD3) | (1 << DDD2));
