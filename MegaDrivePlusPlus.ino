@@ -335,10 +335,6 @@ byte mode_led_colors[][MODES_NO] = {
 
 
 
-// The sketch fails to compile if we don't include this :(
-void set_mode (VideoMode m);
-
-
 VideoMode current_mode;
 unsigned long mode_last_changed_time;
 
