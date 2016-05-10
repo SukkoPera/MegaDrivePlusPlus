@@ -28,6 +28,19 @@
  * PLATFORM SELECTION
  ******************************************************************************/
 
+// Check if we should disable some features because of low flash space
+#if FLASHEND < 2048
+    /* We only have 2 kb flash, let's take special measures:
+     * - Only use a single flashing led to signal current mode
+     * - On ATtiny24 we also always save video mode when changed, without
+     *   checking if it has actually changed: this will wear out EEPROM a bit
+     *   more quickly but it will still take ages ;)
+     */
+    #warning Low flash space mode enabled
+    #define LOW_FLASH
+#endif
+
+
 #if defined __AVR_ATtinyX5__
 /*
  * On ATtinyX5's we only support Reset-From-Pad.
@@ -65,9 +78,14 @@
 #define RESET_OUT_PIN 5
 #define VIDEOMODE_PIN 6
 #define LANGUAGE_PIN 7
-#define MODE_LED_R_PIN 2
-#define MODE_LED_G_PIN 3
-// No blue pin!
+
+#ifdef LOW_FLASH
+    #define MODE_LED_SINGLE_PIN 2
+#else
+    #define MODE_LED_R_PIN 2
+    #define MODE_LED_G_PIN 3
+    // No blue pin!
+#endif
 
 #elif defined __AVR_ATtinyX61__
 /*
@@ -95,9 +113,14 @@
 #define RESET_OUT_PIN 7
 #define VIDEOMODE_PIN 5
 #define LANGUAGE_PIN 3
-#define MODE_LED_R_PIN 8
-#define MODE_LED_G_PIN 6
-#define MODE_LED_B_PIN 4
+
+#ifdef LOW_FLASH
+    #define MODE_LED_SINGLE_PIN 8
+#else
+    #define MODE_LED_R_PIN 8
+    #define MODE_LED_G_PIN 6
+    #define MODE_LED_B_PIN 4
+#endif
 
 #elif defined __AVR_ATtinyX313__
 /*
@@ -124,9 +147,14 @@
 #define RESET_OUT_PIN 14
 #define VIDEOMODE_PIN 16
 #define LANGUAGE_PIN 15
-#define MODE_LED_R_PIN 10
-#define MODE_LED_G_PIN 11
-#define MODE_LED_B_PIN 12
+
+#ifdef LOW_FLASH
+    #define MODE_LED_SINGLE_PIN 10
+#else
+    #define MODE_LED_R_PIN 10
+    #define MODE_LED_G_PIN 11
+    #define MODE_LED_B_PIN 12
+#endif
 
 #elif defined __AVR_ATmega328__ || defined __AVR_ATmega328P__ || defined __AVR_ATmega168__
 /*
@@ -277,10 +305,13 @@ enum PadButton {
 // Define this if your led is common-anode, comment out for common-cathode
 //#define MODE_LED_COMMON_ANODE
 
-/* Use a single led to indicate the video mode. This is blinked 1-3 times
- * according to which mode is set (1 is EUR, see enum VideoMode below). This
- * does NOT disable the multi-colored led and can be used together with it,
- * provided that you have enough pins. Otherwise please disable it manually.
+/* Use a single led to indicate the video mode. This is enabled automatically
+ * in place of the RGB led when low flash space is detected, but since this
+ * does NOT disable the RGB led, it can be used together with it,  provided that
+ * you have enough pins. Otherwise please disable it manually.
+ *
+ * Basically, the single led is blinked 1-3 times according to which mode is set
+ * (1 is EUR, see enum VideoMode below).
  */
 //#define MODE_LED_SINGLE_PIN 3
 
@@ -343,12 +374,16 @@ void save_mode () {
   if (mode_last_changed_time > 0 && millis () - mode_last_changed_time >= MODE_SAVE_DELAY) {
     debug ("Saving video mode to EEPROM: ");
     debugln (current_mode);
+#if !defined LOW_FLASH || !defined __AVR_ATtinyX4__
     byte saved_mode = EEPROM.read (MODE_ROM_OFFSET);
     if (current_mode != saved_mode) {
+#endif
       EEPROM.write (MODE_ROM_OFFSET, static_cast<byte> (current_mode));
+#if !defined LOW_FLASH || !defined __AVR_ATtinyX4__
     } else {
       debugln ("Mode unchanged, not saving");
     }
+#endif
     mode_last_changed_time = 0;    // Don't save again
 
     // Blink led to tell the user that mode was saved
