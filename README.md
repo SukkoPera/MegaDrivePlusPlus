@@ -1,6 +1,6 @@
-## MegaDrivePlusPlus
+## MegaDrive++
 
-**MegaDrivePlusPlus** is a modchip for the **Sega Mega Drive** (AKA **Sega Genesis**). It has the following features:
+**MegaDrive++** is a modchip for the **Sega Mega Drive** (AKA **Sega Genesis**). It has the following features:
 
 - **EUR/USA/JAP mode switching**: this effectively **makes your console universal**, allowing it to **bypass region checks** and to **run all games** without resorting to an adapter.
   - If you come from a PAL region, you will also be able to **run most games at 60 Hz**, which means **full-speed** and **full-screen**! Get rid of those **black bars**! See the difference [here](https://youtu.be/X1CW8Da8i1o)!
