@@ -31,10 +31,8 @@
 // Check if we should disable some features because of low flash space
 #if FLASHEND < 2048
     /* We only have 2 kb flash, let's take special measures:
-     * - Only use a single flashing led to signal current mode
-     * - On ATtiny24 we also always save video mode when changed, without
-     *   checking if it has actually changed: this will wear out EEPROM a bit
-     *   more quickly but it will still take ages ;)
+     * - Remove PWM support for leds. This saves us the use of analogWrite(),
+     *   which saves enough flash memory.
      */
     #warning Low flash space mode enabled
     #define LOW_FLASH
@@ -79,13 +77,9 @@
 #define VIDEOMODE_PIN 6
 #define LANGUAGE_PIN 7
 
-#ifdef LOW_FLASH
-    #define MODE_LED_SINGLE_PIN 2
-#else
-    #define MODE_LED_R_PIN 2
-    #define MODE_LED_G_PIN 3
-    // No blue pin!
-#endif
+#define MODE_LED_R_PIN 2
+#define MODE_LED_G_PIN 3
+// No blue pin!
 
 #elif defined __AVR_ATtinyX61__
 /*
@@ -114,13 +108,10 @@
 #define VIDEOMODE_PIN 5
 #define LANGUAGE_PIN 3
 
-#ifdef LOW_FLASH
-    #define MODE_LED_SINGLE_PIN 8
-#else
-    #define MODE_LED_R_PIN 8
-    #define MODE_LED_G_PIN 6
-    #define MODE_LED_B_PIN 4
-#endif
+#define MODE_LED_R_PIN 8
+#define MODE_LED_G_PIN 6
+#define MODE_LED_B_PIN 4
+
 
 #elif defined __AVR_ATtinyX313__
 /*
@@ -147,14 +138,9 @@
 #define RESET_OUT_PIN 14
 #define VIDEOMODE_PIN 16
 #define LANGUAGE_PIN 15
-
-#ifdef LOW_FLASH
-    #define MODE_LED_SINGLE_PIN 10
-#else
-    #define MODE_LED_R_PIN 10
-    #define MODE_LED_G_PIN 11
-    #define MODE_LED_B_PIN 12
-#endif
+#define MODE_LED_R_PIN 10
+#define MODE_LED_G_PIN 11
+#define MODE_LED_B_PIN 12
 
 #elif defined __AVR_ATmega328__ || defined __AVR_ATmega328P__ || defined __AVR_ATmega168__
 /*
@@ -343,7 +329,7 @@ enum PadButton {
   #include <EEPROM.h>
 #endif
 
-enum VideoMode {
+enum __attribute__ ((__packed__)) VideoMode {
   EUR,
   USA,
   JAP,
@@ -361,6 +347,11 @@ byte mode_led_colors[][MODES_NO] = {
 };
 #endif
 
+#ifdef LOW_FLASH
+  // A bit of hack, but seems to work fine and saves quite a bit of flash memory
+  #define analogWrite digitalWrite
+#endif
+
 
 
 VideoMode current_mode;
@@ -369,21 +360,18 @@ unsigned long mode_last_changed_time;
 // Reset level when NOT ACTIVE
 byte reset_inactive_level;
 
-void save_mode () {
+inline void save_mode () {
 #ifdef MODE_ROM_OFFSET
   if (mode_last_changed_time > 0 && millis () - mode_last_changed_time >= MODE_SAVE_DELAY) {
     debug ("Saving video mode to EEPROM: ");
     debugln (current_mode);
-#if !defined LOW_FLASH || !defined __AVR_ATtinyX4__
+
     byte saved_mode = EEPROM.read (MODE_ROM_OFFSET);
     if (current_mode != saved_mode) {
-#endif
       EEPROM.write (MODE_ROM_OFFSET, static_cast<byte> (current_mode));
-#if !defined LOW_FLASH || !defined __AVR_ATtinyX4__
     } else {
       debugln ("Mode unchanged, not saving");
     }
-#endif
     mode_last_changed_time = 0;    // Don't save again
 
     // Blink led to tell the user that mode was saved
@@ -424,17 +412,17 @@ void save_mode () {
 }
 
 #if !defined __AVR_ATtinyX5__
-void change_mode (int increment) {
+inline void change_mode (int increment) {
   // This also loops in [0, MODES_NO) backwards
   VideoMode new_mode = static_cast<VideoMode> ((current_mode + increment + MODES_NO) % MODES_NO);
   set_mode (new_mode);
 }
 
-void next_mode () {
+inline void next_mode () {
   change_mode (+1);
 }
 
-void prev_mode () {
+inline void prev_mode () {
   change_mode (-1);
 }
 
@@ -471,7 +459,7 @@ void update_mode_leds () {
 
 #ifdef MODE_LED_SINGLE_PIN
   // WARNING: This loop must be reasonably shorter than LONGPRESS_LEN in the worst case!
-  for (int i = 0; i < current_mode + 1; ++i) {
+  for (byte i = 0; i < current_mode + 1; ++i) {
     digitalWrite (MODE_LED_SINGLE_PIN, LOW);
     delay (40);
     digitalWrite (MODE_LED_SINGLE_PIN, HIGH);
@@ -504,7 +492,7 @@ void set_mode (VideoMode m) {
 }
 #endif
 
-void handle_reset_button () {
+inline void handle_reset_button () {
   static byte debounce_level = LOW;
   static bool reset_pressed_before = false;
   static long last_int = 0, reset_press_start = 0;
@@ -639,7 +627,7 @@ void setup () {
   digitalWrite (RESET_OUT_PIN, reset_inactive_level);
 }
 
-void setup_pad () {
+inline void setup_pad () {
   // Set port directions
 #if defined __AVR_ATtinyX5__
   DDRB &= ~((1 << DDB2) | (1 << DDB1) | (1 << DDB0));
@@ -791,7 +779,7 @@ inline byte read_pad () {
 
 #define IGNORE_COMBO_MS LONGPRESS_LEN
 
-void handle_pad () {
+inline void handle_pad () {
   static long last_combo_time = 0;
 
   byte pad_status = read_pad ();
@@ -850,4 +838,3 @@ void loop () {
   handle_pad ();
   save_mode ();
 }
-
