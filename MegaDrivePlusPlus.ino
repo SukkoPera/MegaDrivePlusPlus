@@ -518,7 +518,7 @@ inline void handle_reset_button () {
       if (hold_cycles == 0) {
         debugln ("Reset button pushed for a short time");
         reset_console ();
-    }
+      }
 #if !defined __AVR_ATtinyX5__
     } else {
       // Button has not just been pressed/released
