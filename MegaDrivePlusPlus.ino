@@ -643,7 +643,30 @@ inline void setup_pad () {
   DDRD &= ~((1 << DDD6) | (1 << DDD5) | (1 << DDD4) | (1 << DDD3) | (1 << DDD2));
 #endif
 }
+
 /******************************************************************************/
+
+/* Reads the controller port in a safe way, making sure that values are stable
+ * across a 1 us interval. This is needed to avoid false reads which occur when
+ * we happen to sample the port value right after the SELECT pin has been
+ * toggled and the 74HC157 still hasn't had time to update its outputs.
+ *
+ * This issue was identified by Nopileus, who also helped testing the fix, at
+ * http://assemblergames.com/l/threads/megadrive-new-switchless-region-igr-mod.61273/page-4#post-898356
+ */
+inline byte read_pad_port (volatile uint8_t *pin) {
+  byte port, port2;
+
+  port2 = *pin;
+  do {
+    port = port2;
+    delayMicroseconds (1);
+    port2 = *pin;
+  } while (port != port2);
+
+  return port;
+}
+
 /*
  * The basic idea here is to make up a byte where each bit represents the state
  * of a button, where 1 means pressed, for commodity's sake. The bit-button
@@ -669,7 +692,7 @@ inline byte read_pad () {
    * - Pin 7 (SELECT) -> PB2
    * - Pin 9 (Start/C) -> PB1
    */
-  byte portb = PINB;
+  byte portb = read_pad_port (&PINB);
   if (portb & (1 << PINB2)) {
     // Select is high, we have C & B
     pad_status = (pad_status & 0xCF)
@@ -700,7 +723,7 @@ inline byte read_pad () {
   pad_status = (pad_status & 0xFC) | (~PINB & ((1 << PINB1) | (1 << PINB0)));
 
   // Then deal with the rest
-  byte porta = PINA;
+  byte porta = read_pad_port (&PINA);
   if (porta & (1 << PINA6)) {
     // Select is high, we have C & B
     pad_status = (pad_status & 0xCF)
@@ -720,7 +743,7 @@ inline byte read_pad () {
    * with the 6-button pad.
    */
 
-  byte porta = PINA;
+  byte porta = read_pad_port (&PINA);
   if (porta & (1 << PINA2)) {
     // Select is high, we have the 4 directions, C & B
     pad_status = (pad_status & 0xC0)
@@ -740,7 +763,7 @@ inline byte read_pad () {
    * INT0.
    */
 
-  byte portd = PIND;
+  byte portd = read_pad_port (&PIND);
   if (portd & (1 << PIND2)) {
     // Select is high, we have the 4 directions, C & B
     pad_status = (pad_status & 0xC0)
@@ -760,22 +783,18 @@ inline byte read_pad () {
              | (~PINC & ((1 << PINC1) | (1 << PINC0)))
              ;
 
-  byte portd = PIND;
-  delayMicroseconds (1);
-  byte portd2 = PIND;
-  if (portd == portd2) {
-	  // Signals are stable, process them
-	  if (portd & (1 << PIND2)) {
-		// Select is high, we have Right, Left, C & B
-		pad_status = (pad_status & 0xC3)
-				   | ((~portd & ((1 << PIND6) | (1 << PIND5) | (1 << PIND4) | (1 << PIND3))) >> 1)
-				   ;
-	  } else {
-		// Select is low, we have Start & A
-		pad_status = (pad_status & 0x3F)
-				   | ((~portd & ((1 << PIND6) | (1 << PIND5))) << 1)
-				   ;
-	  }
+  byte portd = read_pad_port (&PIND);
+  // Signals are stable, process them
+  if (portd & (1 << PIND2)) {
+	// Select is high, we have Right, Left, C & B
+	pad_status = (pad_status & 0xC3)
+			   | ((~portd & ((1 << PIND6) | (1 << PIND5) | (1 << PIND4) | (1 << PIND3))) >> 1)
+			   ;
+  } else {
+	// Select is low, we have Start & A
+	pad_status = (pad_status & 0x3F)
+			   | ((~portd & ((1 << PIND6) | (1 << PIND5))) << 1)
+			   ;
   }
 #endif
 
