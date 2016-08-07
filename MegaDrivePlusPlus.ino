@@ -33,6 +33,7 @@
     /* We only have 2 kb flash, let's take special measures:
      * - Remove PWM support for leds. This saves us the use of analogWrite(),
      *   which saves enough flash memory.
+     * - Don't check if video mode has changed before saving it to EEPROM.
      */
     #warning Low flash space mode enabled
     #define LOW_FLASH
