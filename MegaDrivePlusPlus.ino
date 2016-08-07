@@ -401,7 +401,7 @@ inline void save_mode () {
     // Keep off for a bit
     delay (200);
 
-    // Turn led back on
+    // Turn leds back on
     update_mode_leds ();
 #endif  // ENABLE_MODE_LED_RGB
 
