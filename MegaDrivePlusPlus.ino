@@ -340,7 +340,7 @@ enum __attribute__ ((__packed__)) VideoMode {
 #if (defined MODE_LED_R_PIN || defined MODE_LED_G_PIN || defined MODE_LED_B_PIN)
   #define ENABLE_MODE_LED_RGB
 
-byte mode_led_colors[][MODES_NO] = {
+const byte mode_led_colors[][MODES_NO] = {
   MODE_LED_EUR_COLOR,
   MODE_LED_USA_COLOR,
   MODE_LED_JAP_COLOR
@@ -366,12 +366,16 @@ inline void save_mode () {
     debug ("Saving video mode to EEPROM: ");
     debugln (current_mode);
 
+#ifndef LOW_FLASH
     byte saved_mode = EEPROM.read (MODE_ROM_OFFSET);
     if (current_mode != saved_mode) {
+#endif
       EEPROM.write (MODE_ROM_OFFSET, static_cast<byte> (current_mode));
+#ifndef LOW_FLASH
     } else {
       debugln ("Mode unchanged, not saving");
     }
+#endif
     mode_last_changed_time = 0;    // Don't save again
 
     // Blink led to tell the user that mode was saved
@@ -428,7 +432,7 @@ inline void prev_mode () {
 
 void update_mode_leds () {
 #ifdef ENABLE_MODE_LED_RGB
-  byte *colors = mode_led_colors[current_mode];
+  const byte *colors = mode_led_colors[current_mode];
   byte c;
 
 #ifdef MODE_LED_R_PIN
