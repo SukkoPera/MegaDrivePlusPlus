@@ -509,8 +509,7 @@ inline void handle_reset_button () {
       // Button just pressed
       reset_press_start = millis ();
       hold_cycles = 0;
-    }
-    else if (reset_level == reset_inactive_level && reset_pressed_before) {
+    } else if (reset_level == reset_inactive_level && reset_pressed_before) {
       // Button released
       if (hold_cycles == 0) {
         debugln ("Reset button pushed for a short time");
