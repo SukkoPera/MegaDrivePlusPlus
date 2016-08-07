@@ -761,16 +761,21 @@ inline byte read_pad () {
              ;
 
   byte portd = PIND;
-  if (portd & (1 << PIND2)) {
-    // Select is high, we have Right, Left, C & B
-    pad_status = (pad_status & 0xC3)
-               | ((~portd & ((1 << PIND6) | (1 << PIND5) | (1 << PIND4) | (1 << PIND3))) >> 1)
-               ;
-  } else {
-    // Select is low, we have Start & A
-    pad_status = (pad_status & 0x3F)
-               | ((~portd & ((1 << PIND6) | (1 << PIND5))) << 1)
-               ;
+  delayMicroseconds (1);
+  byte portd2 = PIND;
+  if (portd == portd2) {
+	  // Signals are stable, process them
+	  if (portd & (1 << PIND2)) {
+		// Select is high, we have Right, Left, C & B
+		pad_status = (pad_status & 0xC3)
+				   | ((~portd & ((1 << PIND6) | (1 << PIND5) | (1 << PIND4) | (1 << PIND3))) >> 1)
+				   ;
+	  } else {
+		// Select is low, we have Start & A
+		pad_status = (pad_status & 0x3F)
+				   | ((~portd & ((1 << PIND6) | (1 << PIND5))) << 1)
+				   ;
+	  }
   }
 #endif
 
