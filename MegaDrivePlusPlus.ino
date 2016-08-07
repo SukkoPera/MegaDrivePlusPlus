@@ -576,8 +576,10 @@ void setup () {
   if (reset_inactive_level == LOW) {
     // No need for pull-up
     pinMode (RESET_IN_PIN, INPUT);
+#ifdef FORCE_RESET_ACTIVE_LEVEL   // If this is not defined pull-up was already enabled above
   } else {
     pinMode (RESET_IN_PIN, INPUT_PULLUP);
+#endif
   }
 
   // Enable reset
