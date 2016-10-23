@@ -313,6 +313,11 @@ enum PadButton {
 // Duration of the reset pulse (milliseconds)
 #define RESET_LEN 350
 
+// Print the controller status on serial. Useful for debugging.
+#ifdef ENABLE_SERIAL_DEBUG
+//#define DEBUG_PAD
+#endif
+
 /*******************************************************************************
  * END OF SETTINGS
  ******************************************************************************/
@@ -818,9 +823,31 @@ inline void handle_pad () {
   digitalWrite (PAD_LED_PIN, pad_status);
 #endif
 
-#if 0
-  Serial.print ("Pad status = ");
-  Serial.println (pad_status);
+#ifdef DEBUG_PAD
+  static byte last_pad_status = 0x00;
+
+  if (pad_status != last_pad_status) {
+    debug (F("Pressed: "));
+    if (pad_status & MD_BTN_UP)
+      debug (F("Up "));
+    if (pad_status & MD_BTN_DOWN)
+      debug (F("Down "));
+    if (pad_status & MD_BTN_LEFT)
+      debug (F("Left "));
+    if (pad_status & MD_BTN_RIGHT)
+      debug (F("Right "));
+    if (pad_status & MD_BTN_A)
+      debug (F("A "));
+    if (pad_status & MD_BTN_B)
+      debug (F("B "));
+    if (pad_status & MD_BTN_C)
+      debug (F("C "));
+    if (pad_status & MD_BTN_START)
+      debug (F("Start "));
+    debugln ();
+
+    last_pad_status = pad_status;
+  }
 #endif
 
   if ((pad_status & TRIGGER_COMBO) == TRIGGER_COMBO && millis () - last_combo_time > IGNORE_COMBO_MS) {
