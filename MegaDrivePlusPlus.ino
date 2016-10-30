@@ -162,18 +162,18 @@
  *
  *                    ,-----_-----.
  *                    |1     A5 28| JP1/2 (Language)
- *                    |2   0 A4 27| JP3/4 (Video Mode)
+ *     Pad Port Pin 9 |2   0 A4 27| JP3/4 (Video Mode)
  *                    |3   1 A3 26| Reset In
  *     Pad Port Pin 7 |4   2 A2 25| Reset Out
- *     Pad Port Pin 3 |5   3 A1 24| Pad Port Pin 2
- *     Pad Port Pin 4 |6   4 A0 23| Pad Port Pin 1
+ *     Pad Port Pin 6 |5   3 A1 24|
+ *     Pad Port Pin 4 |6   4 A0 23|
  *                +5V |7        22| GND
  *                GND |8        21| +5V
  *                    |9        20| +5V
  *                    |10    13 19| (Built-in LED)
- *     Pad Port Pin 6 |11  5 12 18|
- *     Pad Port Pin 9 |12  6 11 17| LED Blue
- *                    |13  7 10 16| LED Green
+ *     Pad Port Pin 3 |11  5 12 18|
+ *     Pad Port Pin 2 |12  6 11 17| LED Blue
+ *     Pad Port Pin 1 |13  7 10 16| LED Green
  *                    |14  8  9 15| LED Red
  *                    `-----------'
  */
@@ -196,23 +196,23 @@
  * BUTTON COMBO SETTINGS
  ******************************************************************************/
 
-/* DON'T TOUCH THIS! Just look at it for the button names you can use below!
- *
- * Technical note: This has been organized (together with the controller port
- * wiring) to minimize bit twiddling in the controller reading function.
- */
-enum PadButton {
-  MD_BTN_START = 1 << 7,
-  MD_BTN_A =     1 << 6,
-  MD_BTN_C =     1 << 5,
-  MD_BTN_B =     1 << 4,
-  MD_BTN_RIGHT = 1 << 3,
-  MD_BTN_LEFT =  1 << 2,
-  MD_BTN_DOWN =  1 << 1,
-  MD_BTN_UP =    1 << 0
+// DON'T TOUCH THIS! Just look at it for the button names you can use below!
+enum __attribute__ ((__packed__)) PadButton {
+  MD_BTN_Z =     1 << 11,
+	MD_BTN_Y =     1 << 10,
+	MD_BTN_X =     1 << 9,
+	MD_BTN_MODE =  1 << 8,
+  MD_BTN_UP =    1 << 7,
+  MD_BTN_DOWN =  1 << 6,
+  MD_BTN_LEFT =  1 << 5,
+  MD_BTN_RIGHT = 1 << 4,
+  MD_BTN_B =     1 << 3,
+  MD_BTN_C =     1 << 2,
+  MD_BTN_A =     1 << 1,
+  MD_BTN_START = 1 << 0
 };
 
-/* Button combo that enables the other combos
+/* Button combo that enables the other combos.
  *
  * Note: That vertical bar ("pipe") means that the buttons must be pressed
  *       together.
@@ -228,7 +228,7 @@ enum PadButton {
 
 #if defined __AVR_ATtinyX4__
   /* On ATtinyX4's we can't use LEFT and RIGHT, so just use UP and DOWN to
-   * cycle through modes
+   * cycle through modes.
    */
   #define NEXT_MODE_COMBO MD_BTN_DOWN
   #define PREV_MODE_COMBO MD_BTN_UP
@@ -315,7 +315,7 @@ enum PadButton {
 
 // Print the controller status on serial. Useful for debugging.
 #ifdef ENABLE_SERIAL_DEBUG
-//#define DEBUG_PAD
+#define DEBUG_PAD
 #endif
 
 /*******************************************************************************
@@ -324,9 +324,15 @@ enum PadButton {
 
 
 #ifdef ENABLE_SERIAL_DEBUG
-  #define debug(...) Serial.print (__VA_ARGS__)
-  #define debugln(...) Serial.println (__VA_ARGS__)
+  #include <SendOnlySoftwareSerial.h>
+
+  SendOnlySoftwareSerial swSerial(1);
+
+  #define dstart(spd) swSerial.begin (spd)
+  #define debug(...) swSerial.print (__VA_ARGS__)
+  #define debugln(...) swSerial.println (__VA_ARGS__)
 #else
+  #define dstart(...)
   #define debug(...)
   #define debugln(...)
 #endif
@@ -334,6 +340,11 @@ enum PadButton {
 #ifdef MODE_ROM_OFFSET
   #include <EEPROM.h>
 #endif
+
+extern "C" {
+  void readpad ();
+}
+
 
 enum __attribute__ ((__packed__)) VideoMode {
   EUR,
@@ -352,6 +363,17 @@ const byte mode_led_colors[][MODES_NO] = {
   MODE_LED_JAP_COLOR
 };
 #endif
+
+enum __attribute__ ((__packed__)) PadState {
+  PS_INIT,            // Initialization
+  PS_HI,              // Select is high (U/D/L/R/B/C)
+  PS_LO,              // Select is low (U/D/A/Start)
+
+  // The following states are only triggered by 6-button pads
+  //~ PS_6BTN_ALL_LO,     // Pins 1/2/3/4 are all LOW
+  PS_6BTN_XYZ,        // X/Y/Z/Mode
+  PS_6BTN_ALL_HI      // Pins 1/2/3/4 are all HIGH
+};
 
 #ifdef LOW_FLASH
   // A bit of hack, but seems to work fine and saves quite a bit of flash memory
@@ -550,10 +572,7 @@ void reset_console () {
 }
 
 void setup () {
-#ifdef ENABLE_SERIAL_DEBUG
-  Serial.begin (9600);
-#endif
-
+  dstart (57600);
   debugln ("Starting up...");
 
 /* Rant: As per D4s's installation schematics out there (which we use too), it
@@ -650,32 +669,103 @@ inline void setup_pad () {
 #elif defined __AVR_ATtinyX313__
   DDRD &= ~((1 << DDD6) | (1 << DDD5) | (1 << DDD4) | (1 << DDD3) | (1 << DDD2) | (1 << DDD1) | (1 << DDD0));
 #elif defined ARDUINO328
-  DDRC &= ~((1 << DDC1) | (1 << DDC0));
-  DDRD &= ~((1 << DDD6) | (1 << DDD5) | (1 << DDD4) | (1 << DDD3) | (1 << DDD2));
+  //~ DDRC &= ~((1 << DDC1) | (1 << DDC0));
+  DDRD &= ~((1 << DDD7) | (1 << DDD6) | (1 << DDD5) | (1 << DDD4) | (1 << DDD3) | (1 << DDD2) | (1 << DDD0));
+
+// Output
+  DDRB |= (1 << DDB4);
+  PORTB |= (1 << DDB4);
+
+  //~ attachInterrupt (digitalPinToInterrupt (2), on_select_changed, CHANGE);
+  EICRA |= (1 << ISC00);
+  EIMSK |= (1 << INT0);
+  interrupts ();
 #endif
 }
 
 /******************************************************************************/
 
-/* Reads the controller port in a safe way, making sure that values are stable
- * across a 1 us interval. This is needed to avoid false reads which occur when
- * we happen to sample the port value right after the SELECT pin has been
- * toggled and the 74HC157 still hasn't had time to update its outputs.
- *
- * This issue was identified by Nopileus, who also helped testing the fix, at
- * http://assemblergames.com/l/threads/megadrive-new-switchless-region-igr-mod.61273/page-4#post-898356
- */
-inline byte read_pad_port (volatile uint8_t *pin) {
-  byte port, port2;
+// HIGH -> Not pressed
+volatile byte g_buttons_1 = 0xFF;
+volatile byte g_buttons_2 = 0xFF;
+volatile byte g_buttons_3 = 0xFF;
 
-  port2 = *pin;
-  do {
-    port = port2;
-    delayMicroseconds (1);
-    port2 = *pin;
-  } while (port != port2);
+// ISR
+void on_select_changed () {
+//~ ISR (INT0_vect) {
+  PORTB |= (1 << DDB4);
 
-  return port;
+  byte portd = PIND;
+
+  PORTB &= ~(1 << DDB4);
+  PORTB |= (1 << DDB4);
+
+  static PadState state = PS_INIT;
+
+  switch (state) {
+    case PS_INIT:
+      if (portd & (1 << PIND2)) {
+        // Select is high, it will be low next time we're called
+        state = PS_LO;
+      } else {
+        // Vice-versa
+        state = PS_HI;
+      }
+      break;
+    case PS_HI:
+      if (portd & (1 << PIND2)) {
+        g_buttons_1 = portd;
+        state = PS_LO;
+      } else {
+        state = PS_INIT;
+      }
+      break;
+    case PS_LO:
+      // We expect SELECT to be LOW
+      if (portd & (1 << PIND2)) {
+        state = PS_INIT;
+      } else {
+        // Read UP and DOWN
+        if ((portd & 0xF0) == 0) {
+          /* U/D/L/R are all low at the same time, this means we have a 6-button
+           * pad
+           */
+          state = PS_6BTN_XYZ;
+        } else {
+          // We have Start & A (and UP & DOWN, in case)
+          g_buttons_2 = portd;
+          state = PS_HI;
+        }
+      }
+      break;
+    case PS_6BTN_XYZ:
+      // We expect SELECT to be HIGH
+      if (portd & (1 << PIND2)) {
+        // We have MODE, X, Y & Z
+        g_buttons_3 = portd;
+        state = PS_6BTN_ALL_HI;
+      } else {
+        state = PS_INIT;
+      }
+      break;
+    case PS_6BTN_ALL_HI:
+      /* U/D/L/R are all low at the same time, just wait for SELECT to go high
+       * again
+       *
+       * We expect SELECT to be LOW
+       */
+      if (portd & (1 << PIND2)) {
+        state = PS_INIT;
+      } else {
+        state = PS_HI;
+      }
+      break;
+  }
+
+  PORTB &= ~(1 << DDB4);
+  if ((portd & (1 << PIND2)) != (PIND & (1 << PIND2))) {
+    PORTB |= (1 << DDB4);
+  }
 }
 
 /*
@@ -693,8 +783,10 @@ inline byte read_pad_port (volatile uint8_t *pin) {
  * Note that printing readings through serial slows down the code so much that
  * it misses most of the readings with SELECT low!
  */
-inline byte read_pad () {
-  static byte pad_status = 0;
+#if 0
+inline word read_pad () {
+  static PadState state = PS_INIT;
+  static word buttons = 0;
 
 #if defined __AVR_ATtinyX5__
   /*
@@ -706,12 +798,12 @@ inline byte read_pad () {
   byte portb = read_pad_port (&PINB);
   if (portb & (1 << PINB2)) {
     // Select is high, we have C & B
-    pad_status = (pad_status & 0xCF)
-               | ((~portb & ((1 << PINB1) | (1 << PINB0))) << 4);
+    buttons = (buttons & 0xCF)
+            | ((~portb & ((1 << PINB1) | (1 << PINB0))) << 4);
   } else {
     // Select is low, we have Start & A
-    pad_status = (pad_status & 0x3F)
-               | ((~portb & ((1 << PINB1) | (1 << PINB0))) << 6);
+    buttons = (buttons & 0x3F)
+            | ((~portb & ((1 << PINB1) | (1 << PINB0))) << 6);
   }
 #elif defined __AVR_ATtinyX4__
   /*
@@ -731,20 +823,20 @@ inline byte read_pad () {
    */
 
   // Update UP and DOWN, which are always valid and on PORTB alone
-  pad_status = (pad_status & 0xFC) | (~PINB & ((1 << PINB1) | (1 << PINB0)));
+  buttons = (buttons & 0xFC) | (~PINB & ((1 << PINB1) | (1 << PINB0)));
 
   // Then deal with the rest
   byte porta = read_pad_port (&PINA);
   if (porta & (1 << PINA6)) {
     // Select is high, we have C & B
-    pad_status = (pad_status & 0xCF)
-               | ((~porta & ((1 << PINA2) | (1 << PINA1))) << 3)
-               ;
+    buttons = (buttons & 0xCF)
+            | ((~porta & ((1 << PINA2) | (1 << PINA1))) << 3)
+            ;
   } else {
     // Select is low, we have Start & A
-    pad_status = (pad_status & 0x3F)
-               | ((~porta & ((1 << PINA2) | (1 << PINA1))) << 5)
-               ;
+    buttons = (buttons & 0x3F)
+            | ((~porta & ((1 << PINA2) | (1 << PINA1))) << 5)
+            ;
   }
 #elif defined __AVR_ATtinyX61__
   /*
@@ -757,16 +849,16 @@ inline byte read_pad () {
   byte porta = read_pad_port (&PINA);
   if (porta & (1 << PINA2)) {
     // Select is high, we have the 4 directions, C & B
-    pad_status = (pad_status & 0xC0)
-               | ((~porta & ((1 << PINA6) | (1 << PINA5) | (1 << PINA4) | (1 << PINA3))) >> 1)
-               | (~porta & ((1 << PINA1) | (1 << PINA0)))
-               ;
+    buttons = (buttons & 0xC0)
+            | ((~porta & ((1 << PINA6) | (1 << PINA5) | (1 << PINA4) | (1 << PINA3))) >> 1)
+            | (~porta & ((1 << PINA1) | (1 << PINA0)))
+            ;
   } else {
     // Select is low, we have Up, Down, Start & A
-    pad_status = (pad_status & 0x30)
-               | ((~porta & ((1 << PINA6) | (1 << PINA5))) << 1)
-               | (~porta & ((1 << PINA1) | (1 << PINA0)))
-               ;
+    buttons = (buttons & 0x30)
+            | ((~porta & ((1 << PINA6) | (1 << PINA5))) << 1)
+            | (~porta & ((1 << PINA1) | (1 << PINA0)))
+            ;
   }
 #elif defined __AVR_ATtinyX313__
   /*
@@ -777,54 +869,155 @@ inline byte read_pad () {
   byte portd = read_pad_port (&PIND);
   if (portd & (1 << PIND2)) {
     // Select is high, we have the 4 directions, C & B
-    pad_status = (pad_status & 0xC0)
-               | ((~portd & ((1 << PIND6) | (1 << PIND5) | (1 << PIND4) | (1 << PIND3))) >> 1)
-               | (~portd & ((1 << PIND1) | (1 << PIND0)))
-               ;
+    buttons = (buttons & 0xC0)
+            | ((~portd & ((1 << PIND6) | (1 << PIND5) | (1 << PIND4) | (1 << PIND3))) >> 1)
+            | (~portd & ((1 << PIND1) | (1 << PIND0)))
+            ;
   } else {
     // Select is low, we have Up, Down, Start & A
-    pad_status = (pad_status & 0x30)
-               | ((~portd & ((1 << PIND6) | (1 << PIND5))) << 1)
-               | (~portd & ((1 << PIND1) | (1 << PIND0)))
-               ;
+    buttons = (buttons & 0x30)
+            | ((~portd & ((1 << PIND6) | (1 << PIND5))) << 1)
+            | (~portd & ((1 << PIND1) | (1 << PIND0)))
+            ;
   }
 #elif defined ARDUINO328
-  // Update UP and DOWN, which are always valid and on PORTC alone
-  pad_status = (pad_status & 0xFC)
-             | (~PINC & ((1 << PINC1) | (1 << PINC0)))
-             ;
+  //~ static PadState old_state = PS_INIT;
+  //~ if (state != old_state) {
+    //~ debug ("Pad state = ");
+    //~ debugln (state);
+    //~ old_state = state;
+  //~ }
 
-  byte portd = read_pad_port (&PIND);
-  // Signals are stable, process them
-  if (portd & (1 << PIND2)) {
-    // Select is high, we have Right, Left, C & B
-    pad_status = (pad_status & 0xC3)
-               | ((~portd & ((1 << PIND6) | (1 << PIND5) | (1 << PIND4) | (1 << PIND3))) >> 1)
-               ;
-  } else {
-    // Select is low, we have Start & A
-    pad_status = (pad_status & 0x3F)
-               | ((~portd & ((1 << PIND6) | (1 << PIND5))) << 1)
-               ;
+  // Wait for signals to be stable
+  //~ byte portd = read_pad_port (&PIND);
+
+//~ if (newData) {
+newData = true;
+for (byte i = 0; i < 2; i++) {
+  switch (state) {
+    case PS_INIT:
+      if (portd & (1 << PIND2)) {
+        // Select is high
+        state = PS_HI;
+      } else {
+        // Low
+        state = PS_LO;
+      }
+      break;
+    case PS_HI:
+      if (portd & (1 << PIND2)) {
+        // Select is high, we have Right, Left, C & B
+        buttons = (buttons & 0xFFC3)
+                | ((~portd & ((1 << PIND6) | (1 << PIND5) | (1 << PIND4) | (1 << PIND3))) >> 1)
+                ;
+
+        // Update UP and DOWN, which are always valid and on PORTC alone
+        buttons = (buttons & 0xFFFC)
+                | (~portc & ((1 << PINC1) | (1 << PINC0)))
+                ;
+      } else {
+        state = PS_LO;
+      }
+      break;
+    case PS_LO:
+      if (portd & (1 << PIND2)) {
+        state = PS_HI;
+      } else {        // Select is low
+        // Read UP and DOWN
+        byte ud = portc & ((1 << PINC1) | (1 << PINC0));
+        byte lr = portd & ((1 << PIND4) | (1 << PIND3));
+        //~ debug ("UD = ");
+        //~ debugln (ud, BIN);
+        //~ debug ("LR = ");
+        //~ debugln (lr, BIN);
+        if (ud == 0 && lr == 0) {
+          /* U/D/L/R are all low at the same time, this means we have a 6-button
+           * pad
+           */
+          state = PS_6BTN_ALL_LO;
+        } else {
+          // We have Start & A
+          buttons = (buttons & 0xFF3F)
+                  | ((~portd & ((1 << PIND6) | (1 << PIND5))) << 1)
+                  ;
+
+          // We can also update UP and DOWN
+          buttons = (buttons & 0xFFFC) | (~ud & ((1 << PINC1) | (1 << PINC0)));
+        }
+      }
+      break;
+    //~ } case PS_6BTN_ALL_LO:
+      //~ // Just wait for SELECT to go high again
+      //~ if (portd & (1 << PIND2)) {
+        //~ state = PS_6BTN_XYZ;
+      //~ }
+      //~ break;
+    case PS_6BTN_XYZ:
+      if (portd & (1 << PIND2)) {
+        // We have Z and Y on pins 1/2
+        //~ buttons = (buttons & 0xF3FF)
+                //~ | (((~(word) PINC) & ((1 << PINC1) | (1 << PINC0))) << 10)
+                //~ ;
+
+        // We have X and MODE on pins 3/4
+        //~ buttons = (buttons & 0xFCFF)
+                //~ | (((~(word) portd) & ((1 << PIND6) | (1 << PIND5))) << 3)
+                //~ ;
+      } else {
+        state = PS_6BTN_ALL_HI;
+      }
+      break;
+    case PS_6BTN_ALL_HI:
+      /* U/D/L/R are all low at the same time, just wait for SELECT to go high
+       * again
+       */
+      if (portd & (1 << PIND2)) {
+        state = PS_HI;
+      }
+      break;
   }
+}
+newData = false;
+//~ }
 #endif
 
-  return pad_status;
+  return buttons;
 }
+#endif
+
+
+
+word read_pad () {
+  //~ word buttons = ((~g_buttons_1 & ((1 << PIND6) | (1 << PIND5) | (1 << PIND4) | (1 << PIND3))) >> 1)
+               //~ | ((~g_buttons_2 & ((1 << PIND6) | (1 << PIND5))) << 1)
+               //~ | (~g_buttons_1 & ((1 << PINC1) | (1 << PINC0)))
+               //~ ;
+  //~ debugln (g_buttons_1);
+  byte b1 = ~g_buttons_1;
+  byte b2 = ~g_buttons_2;
+  byte b3 = ~g_buttons_3;
+  word buttons = (b1 & 0xF8) | ((b1 & 0x01) << 2)
+               | ((b2 & 0x08) >> 2) | (b2 & 0x01)
+               | (((word) (b3 & 0xF0)) << 4)
+               ;
+
+  return buttons;
+}
+
 
 #define IGNORE_COMBO_MS LONGPRESS_LEN
 
 inline void handle_pad () {
   static long last_combo_time = 0;
 
-  byte pad_status = read_pad ();
+  word pad_status = read_pad ();
 
 #ifdef PAD_LED_PIN
-  digitalWrite (PAD_LED_PIN, pad_status);
+  digitalWrite (PAD_LED_PIN, pad_status != 0);
 #endif
 
 #ifdef DEBUG_PAD
-  static byte last_pad_status = 0x00;
+  static word last_pad_status = 0;
 
   if (pad_status != last_pad_status) {
     debug (F("Pressed: "));
@@ -842,6 +1035,14 @@ inline void handle_pad () {
       debug (F("B "));
     if (pad_status & MD_BTN_C)
       debug (F("C "));
+    if (pad_status & MD_BTN_X)
+      debug (F("X "));
+    if (pad_status & MD_BTN_Y)
+      debug (F("Y "));
+    if (pad_status & MD_BTN_Z)
+      debug (F("Z "));
+    if (pad_status & MD_BTN_MODE)
+      debug (F("Mode "));
     if (pad_status & MD_BTN_START)
       debug (F("Start "));
     debugln ();
