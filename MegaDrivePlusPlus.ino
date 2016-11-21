@@ -313,6 +313,14 @@ enum PadButton {
 // Duration of the reset pulse (milliseconds)
 #define RESET_LEN 350
 
+/* Duration of the pad read function (microseconds). The pad signals must be
+ * stable for this amount of time for the read to be valid. This used to be 1,
+ * but then it was discovered that the 6-button pad needs more time, so it was
+ * brought to 5. Feel free to increase it a bit (up to 10 or thereabots) if you
+ * are experiencing unwanted resets when you keep A+B pressed.
+ */
+#define PORT_READ_TIME 5
+
 // Print the controller status on serial. Useful for debugging.
 #ifdef ENABLE_SERIAL_DEBUG
 //#define DEBUG_PAD
@@ -671,7 +679,7 @@ inline byte read_pad_port (volatile uint8_t *pin) {
   port2 = *pin;
   do {
     port = port2;
-    delayMicroseconds (1);
+    delayMicroseconds (PORT_READ_TIME);
     port2 = *pin;
   } while (port != port2);
 
