@@ -256,14 +256,14 @@ volatile byte g_buttons_3 = 0xFF;
 inline void save_mode () {
 #ifdef MODE_ROM_OFFSET
   if (mode_last_changed_time > 0 && millis () - mode_last_changed_time >= MODE_SAVE_DELAY) {
-    debug ("Saving video mode to EEPROM: ");
+    debug (F("Saving video mode to EEPROM: "));
     debugln (current_mode);
 
     byte saved_mode = EEPROM.read (MODE_ROM_OFFSET);
     if (current_mode != saved_mode) {
       EEPROM.write (MODE_ROM_OFFSET, static_cast<byte> (current_mode));
     } else {
-      debugln ("Mode unchanged, not saving");
+      debugln (F("Mode unchanged, not saving"));
     }
     mode_last_changed_time = 0;    // Don't save again
 
@@ -403,14 +403,14 @@ inline void handle_reset_button () {
     } else if (reset_level == reset_inactive_level && reset_pressed_before) {
       // Button released
       if (hold_cycles == 0) {
-        debugln ("Reset button pushed for a short time");
+        debugln (F("Reset button pushed for a short time"));
         reset_console ();
       }
     } else {
       // Button has not just been pressed/released
       if (reset_level != reset_inactive_level && millis () % reset_press_start >= LONGPRESS_LEN * (hold_cycles + 1)) {
         // Reset has been held for a while
-        debugln ("Reset button hold");
+        debugln (F("Reset button hold"));
         ++hold_cycles;
         next_mode ();
       }
@@ -421,7 +421,7 @@ inline void handle_reset_button () {
 }
 
 void reset_console () {
-  debugln ("Resetting console");
+  debugln (F("Resetting console"));
 
   digitalWrite (RESET_OUT_PIN, !reset_inactive_level);
   delay (RESET_LEN);
@@ -430,7 +430,7 @@ void reset_console () {
 
 void setup () {
   dstart (57600);
-  debugln ("Starting up...");
+  debugln (F("Starting up..."));
 
 /* Rant: As per D4s's installation schematics out there (which we use too), it
  * seems that on consoles with an active low reset signal, the Reset In input
@@ -446,13 +446,13 @@ void setup () {
   delay (100);
   pinMode (RESET_IN_PIN, INPUT_PULLUP);
   reset_inactive_level = digitalRead (RESET_IN_PIN);
-  debug ("Reset line is ");
-  debug (reset_inactive_level ? "HIGH" : "LOW");
+  debug (F("Reset line is "));
+  debug (reset_inactive_level ? F("HIGH") : F("LOW"));
   debugln (" at startup");
 #else
   reset_inactive_level = !FORCE_RESET_ACTIVE_LEVEL;
-  debug ("Reset line is forced to active-");
-  debugln (FORCE_RESET_ACTIVE_LEVEL ? "HIGH" : "LOW");
+  debug (F("Reset line is forced to active-"));
+  debugln (FORCE_RESET_ACTIVE_LEVEL ? F("HIGH") : F("LOW"));
 #endif
 
   if (reset_inactive_level == LOW) {
@@ -495,7 +495,7 @@ void setup () {
   current_mode = EUR;
 #ifdef MODE_ROM_OFFSET
   byte tmp = EEPROM.read (MODE_ROM_OFFSET);
-  debug ("Loaded video mode from EEPROM: ");
+  debug (F("Loaded video mode from EEPROM: "));
   debugln (tmp);
   if (tmp < MODES_NO) {
     // Palette EEPROM value is good
@@ -599,37 +599,37 @@ inline void handle_pad () {
 
   if ((pad_status & TRIGGER_COMBO) == TRIGGER_COMBO && millis () - last_combo_time > IGNORE_COMBO_MS) {
     if ((pad_status & RESET_COMBO) == RESET_COMBO) {
-      debugln ("Reset combo detected");
+      debugln (F("Reset combo detected"));
       reset_console ();
       pad_status = 0;     // Avoid continuous reset (pad_status might keep the last value during reset!)
       last_combo_time = millis ();
 #ifdef EUR_COMBO
     } else if ((pad_status & EUR_COMBO) == EUR_COMBO) {
-      debugln ("EUR mode combo detected");
+      debugln (F("EUR mode combo detected"));
       set_mode (EUR);
       last_combo_time = millis ();
 #endif
 #ifdef USA_COMBO
     } else if ((pad_status & USA_COMBO) == USA_COMBO) {
-      debugln ("USA mode combo detected");
+      debugln (F("USA mode combo detected"));
       set_mode (USA);
       last_combo_time = millis ();
 #endif
 #ifdef JAP_COMBO
     } else if ((pad_status & JAP_COMBO) == JAP_COMBO) {
-      debugln ("JAP mode combo detected");
+      debugln (F("JAP mode combo detected"));
       set_mode (JAP);
       last_combo_time = millis ();
 #endif
 #ifdef NEXT_MODE_COMBO
     } else if ((pad_status & NEXT_MODE_COMBO) == NEXT_MODE_COMBO) {
-      debugln ("Next mode combo detected");
+      debugln (F("Next mode combo detected"));
       next_mode ();
       last_combo_time = millis ();
 #endif
 #ifdef PREV_MODE_COMBO
     } else if ((pad_status & PREV_MODE_COMBO) == PREV_MODE_COMBO) {
-      debugln ("Previous mode combo detected");
+      debugln (F("Previous mode combo detected"));
       prev_mode ();
       last_combo_time = millis ();
 #endif
