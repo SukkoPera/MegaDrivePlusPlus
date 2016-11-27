@@ -24,7 +24,7 @@
  * https://github.com/SukkoPera/MegaDrivePlusPlus
  */
 
-/* MegaDrive - Bare ATmega328 Wiring diagram:
+/* Bare ATmega328 Wiring diagram:
  *
  *                    ,-----_-----.
  *                    |1     A5 28| JP1/2 (Language)
@@ -42,15 +42,32 @@
  *     Pad Port Pin 1 |13  7 10 16| LED Green
  *                    |14  8  9 15| LED Red
  *                    `-----------'
+ *
+ * Wiring considerations:
+ * - We read the pad port status through an ISR triggered by a level change on
+ *   the SELECT line. Said line is triggered very quickly for 6-button pads (~4
+ *   us), so the ISR has very little time to complete. Thus we need to keep all
+ *   button lines on the same port and only PORTD has enough pins on an
+ *   ATmega328.
+ * - Outputting debugging messages is useful, but unfortunately the hardware
+ *   UART is right on PORTD on the 328. Actually we only need the TX pin
+ *   (ATmega328 pin 3, mapped to pin 1 on an Arduino), so we keep that one free.
+ *   We cannot use the hardware UART support though, since that would also
+ *   prevent us from using pin 0 at will. Thus we resort to using Nick Gammon's
+ *   SendOnlySoftwareSerial library, available here:
+ *   https://forum.arduino.cc/index.php?topic=112013.0. Note that while we are
+ *   not tied to any specific pin anymore at this point, we really want to use
+ *   pin 1, since that is connected to the onboard Serial <-> USB converter on
+ *   Arduino boards.
  */
 
 #define RESET_IN_PIN A3
 #define RESET_OUT_PIN A2
 #define VIDEOMODE_PIN A4
 #define LANGUAGE_PIN A5
-#define MODE_LED_R_PIN 9
-#define MODE_LED_G_PIN 10
-#define MODE_LED_B_PIN 11
+#define MODE_LED_R_PIN 9          // PWM
+#define MODE_LED_G_PIN 10         // PWM
+#define MODE_LED_B_PIN 11         // PWM
 #define PAD_LED_PIN LED_BUILTIN
 #define ENABLE_SERIAL_DEBUG
 
