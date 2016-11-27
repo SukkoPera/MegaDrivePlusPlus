@@ -24,141 +24,7 @@
  * https://github.com/SukkoPera/MegaDrivePlusPlus
  */
 
-/*******************************************************************************
- * PLATFORM SELECTION
- ******************************************************************************/
-
-// Check if we should disable some features because of low flash space
-#if FLASHEND < 2048
-    /* We only have 2 kb flash, let's take special measures:
-     * - Remove PWM support for leds. This saves us the use of analogWrite(),
-     *   which saves enough flash memory.
-     * - Don't check if video mode has changed before saving it to EEPROM.
-     */
-    #warning Low flash space mode enabled
-    #define LOW_FLASH
-#endif
-
-
-#if defined __AVR_ATtinyX5__
-/*
- * On ATtinyX5's we only support Reset-From-Pad.
- *                  ,-----_-----.
- *                  |1 (5)     8| +5V
- *         Reset In |2   3  2  7| Pad Port Pin 7
- *        Reset Out |3   4  1  6| Pad Port Pin 9
- *              GND |4      0  5| Pad Port Pin 6
- *                  `-----------'
- */
-#define RESET_IN_PIN 3
-#define RESET_OUT_PIN 4
-
-#elif defined __AVR_ATtinyX4__
-/*
- * On ATtinyX4's most features are supported. The only exception is that RIGHT
- * and LEFT cannot be used in combos.
- *
- * The connection layout is derived from that of the Seb/D4s mod, so that if you
- * already have a socket wired properly in you console, you will just need to
- * add a few wires and replace the chip to get the new features. The wires to be
- * added are all those coming from the controller pad port.
- *
- *                  ,-----_-----.
- *              +5V |1        14| GND
- *   Pad Port Pin 1 |2   0 10 13| Reset In
- *   Pad Port Pin 2 |3   1  9 12| Pad Port Pin 6
- *                  |4 (11) 8 11| Pad Port Pin 9
- *          LED Red |5   2  7 10| JP1/2 (Language)
- *        LED Green |6   3  6  9| JP3/4 (Video Mode)
- *   Pad Port Pin 7 |7   4  5  8| Reset Out
- *                  `-----------'
- */
-#define RESET_IN_PIN 10
-#define RESET_OUT_PIN 5
-#define VIDEOMODE_PIN 6
-#define LANGUAGE_PIN 7
-
-#define MODE_LED_R_PIN 2
-#define MODE_LED_G_PIN 3
-// No blue pin!
-
-#elif defined __AVR_ATtinyX61__
-/*
- * On ATtinyX61's all features are supported. We even read all buttons with a
- * single instruction.
- *
- * The connection layout puts the SELECT signal on the INT1 pin. This will
- * probably be needed if we ever want to read 6-button pads. LED is connected to
- * PWM-capable pins.
- *
- *                    ,-----_-----.
- *           Reset In |1   9  0 20| Pad Port Pin 1
- *            LED Red |2   8  1 19| Pad Port Pin 2
- *          Reset Out |3   7  2 18| Pad Port Pin 7
- *          LED Green |4   6 14 17| Pad Port Pin 3
- *                +5V |5        16| GND
- *                GND |6        15| +5V
- * JP3/4 (Video Mode) |7   5 10 14| Pad Port Pin 4
- *           LED Blue |8   4 11 13| Pad Port Pin 6
- *   JP1/2 (Language) |9   3 12 12| Pad Port Pin 9
- *                    |10(15)13 11|
- *                    `-----------'
- */
-#define RESET_IN_PIN 9
-#define RESET_OUT_PIN 7
-#define VIDEOMODE_PIN 5
-#define LANGUAGE_PIN 3
-
-#define MODE_LED_R_PIN 8
-#define MODE_LED_G_PIN 6
-#define MODE_LED_B_PIN 4
-
-
-#elif defined __AVR_ATtinyX313__
-/*
- * On ATtinyX13's all features are supported. We even read all buttons with a
- * single instruction.
- *
- * Again, the connection layout puts the SELECT signal on the INT1 pin. LED is
- * connected to PWM-capable pins.
- *
- *                    ,-----_-----.
- *                    |1 (17)   20| +5V
- *     Pad Port Pin 1 |2   0 16 19| JP3/4 (Video Mode)
- *     Pad Port Pin 2 |3   1 15 18| JP1/2 (Language)
- *                    |4   2 14 17| Reset Out
- *                    |5   3 13 16| Reset In
- *     Pad Port Pin 7 |6   4 12 15| LED Blue
- *     Pad Port Pin 3 |7   5 11 14| LED Green
- *     Pad Port Pin 4 |8   6 10 13| LED Red
- *     Pad Port Pin 6 |9   7  9 12|
- *                GND |10(15) 8 11| Pad Port Pin 9
- *                    `-----------'
- */
-#define RESET_IN_PIN 13
-#define RESET_OUT_PIN 14
-#define VIDEOMODE_PIN 16
-#define LANGUAGE_PIN 15
-#define MODE_LED_R_PIN 10
-#define MODE_LED_G_PIN 11
-#define MODE_LED_B_PIN 12
-
-#elif defined __AVR_ATmega328__ || defined __AVR_ATmega328P__ || defined __AVR_ATmega168__
-/*
- * Arduino Uno/Nano/Micro/Whatever, use a convenience #define till we come up
- * with something better
- */
-#define ARDUINO328
-
-/*
- * On an full Arduino board all features are supported. Unfortunately, there is
- * no port fully available, so we resort again to reading UP and DOWN from a
- * different port. Technically we could use PORTD, but since working on a full
- * Arduino board is mainly useful to get debugging messages through the serial
- * port, we don't do that (PD0 and PD1 are used by the hardware serial port).
- * But if you put a single ATmega328 on a board and use its internal clock you
- * also get PORTB, so we might support that in the future. On a side note, PORTD
- * also has INT1 on pin2, so we could easily use the X61 read function...
+/* MegaDrive - Bare ATmega328 Wiring diagram:
  *
  *                    ,-----_-----.
  *                    |1     A5 28| JP1/2 (Language)
@@ -177,6 +43,7 @@
  *                    |14  8  9 15| LED Red
  *                    `-----------'
  */
+
 #define RESET_IN_PIN A3
 #define RESET_OUT_PIN A2
 #define VIDEOMODE_PIN A4
@@ -186,10 +53,6 @@
 #define MODE_LED_B_PIN 11
 #define PAD_LED_PIN LED_BUILTIN
 #define ENABLE_SERIAL_DEBUG
-
-#else
-  #error "Unsupported platform!"
-#endif
 
 
 /*******************************************************************************
@@ -226,28 +89,19 @@ enum __attribute__ ((__packed__)) PadButton {
  */
 #define RESET_COMBO (MD_BTN_A | MD_BTN_C)
 
-#if defined __AVR_ATtinyX4__
-  /* On ATtinyX4's we can't use LEFT and RIGHT, so just use UP and DOWN to
-   * cycle through modes.
-   */
-  #define NEXT_MODE_COMBO MD_BTN_DOWN
-  #define PREV_MODE_COMBO MD_BTN_UP
-#elif defined __AVR_ATtinyX61__ || defined __AVR_ATtinyX313__ || defined ARDUINO328
-  /* On ATtinyX61's, ATtinyX313's and Arduinos we can detect all buttons, so we
-   * can make up a specific combo for every mode that switches straight to it,
-   * no need to cycle among modes.
-   */
-  #define EUR_COMBO MD_BTN_DOWN
-  #define USA_COMBO MD_BTN_RIGHT
-  #define JAP_COMBO MD_BTN_LEFT
-#endif
+/* On ATtinyX61's, ATtinyX313's and Arduinos we can detect all buttons, so we
+ * can make up a specific combo for every mode that switches straight to it,
+ * no need to cycle among modes.
+ */
+#define EUR_COMBO MD_BTN_DOWN
+#define USA_COMBO MD_BTN_RIGHT
+#define JAP_COMBO MD_BTN_LEFT
 
 
 /*******************************************************************************
  * ADVANCED SETTINGS
  ******************************************************************************/
 
-#if !defined __AVR_ATtinyX5__
 /* Offset in the EEPROM at which the current mode should be saved. Undefine to
  * disable mode saving.
  */
@@ -258,8 +112,6 @@ enum __attribute__ ((__packed__)) PadButton {
 
 // Force the reset line level when active. Undefine to enable auto-detection.
 //#define FORCE_RESET_ACTIVE_LEVEL LOW
-
-#endif // !__AVR_ATtinyX5__
 
 /* Colors to use to indicate the video mode, in 8-bit RGB componentes. You can
  * use any value here if your led is connected to PWM-capable pins, otherwise
@@ -273,21 +125,9 @@ enum __attribute__ ((__packed__)) PadButton {
  *
  * Oh, and good luck trying to fit a 5mm RGB led in the MegaDrive ;).
  */
-#if defined __AVR_ATtinyX4__
-/* We only have two LED pins, so let's use a dual-color led and stick to the
- * D4s/Seb colors
- */
-#define MODE_LED_EUR_COLOR {0x00, 0xFF}  // Green
-#define MODE_LED_USA_COLOR {0xFF, 0xFF}  // Orange
-#define MODE_LED_JAP_COLOR {0xFF, 0x00}  // Red
-
-#elif !defined __AVR_ATtinyX5__
-
 #define MODE_LED_EUR_COLOR {0x00, 0xFF, 0x00}  // Green
 #define MODE_LED_USA_COLOR {0x00, 0x00, 0xFF}  // Blue
 #define MODE_LED_JAP_COLOR {0xFF, 0x00, 0x00}  // Red
-
-#endif
 
 // Define this if your led is common-anode, comment out for common-cathode
 //#define MODE_LED_COMMON_ANODE
@@ -381,12 +221,25 @@ enum __attribute__ ((__packed__)) PadState {
 #endif
 
 
-
+// Video mode
 VideoMode current_mode;
 unsigned long mode_last_changed_time;
 
 // Reset level when NOT ACTIVE
 byte reset_inactive_level;
+
+/* Raw pad port statuses as read by the ISR:
+ * - g_buttons_1 contains the port status when SELECT is HIGH
+ * - g_buttons_2 contains the port status when SELECT is LOW
+ * - g_buttons_3 contains the port status when SELECT is PULSE-3
+ *
+ * These are raw readings, since we don't really have any time to spare in the
+ * ISR, so HIGH means "Not pressed" here, that's why we start with 0xFFs.
+ */
+volatile byte g_buttons_1 = 0xFF;
+volatile byte g_buttons_2 = 0xFF;
+volatile byte g_buttons_3 = 0xFF;
+
 
 inline void save_mode () {
 #ifdef MODE_ROM_OFFSET
@@ -394,16 +247,12 @@ inline void save_mode () {
     debug ("Saving video mode to EEPROM: ");
     debugln (current_mode);
 
-#ifndef LOW_FLASH
     byte saved_mode = EEPROM.read (MODE_ROM_OFFSET);
     if (current_mode != saved_mode) {
-#endif
       EEPROM.write (MODE_ROM_OFFSET, static_cast<byte> (current_mode));
-#ifndef LOW_FLASH
     } else {
       debugln ("Mode unchanged, not saving");
     }
-#endif
     mode_last_changed_time = 0;    // Don't save again
 
     // Blink led to tell the user that mode was saved
@@ -443,7 +292,6 @@ inline void save_mode () {
 #endif  // MODE_ROM_OFFSET
 }
 
-#if !defined __AVR_ATtinyX5__
 inline void change_mode (int increment) {
   // This also loops in [0, MODES_NO) backwards
   VideoMode new_mode = static_cast<VideoMode> ((current_mode + increment + MODES_NO) % MODES_NO);
@@ -522,7 +370,6 @@ void set_mode (VideoMode m) {
 
   mode_last_changed_time = millis ();
 }
-#endif
 
 inline void handle_reset_button () {
   static byte debounce_level = LOW;
@@ -547,7 +394,6 @@ inline void handle_reset_button () {
         debugln ("Reset button pushed for a short time");
         reset_console ();
       }
-#if !defined __AVR_ATtinyX5__
     } else {
       // Button has not just been pressed/released
       if (reset_level != reset_inactive_level && millis () % reset_press_start >= LONGPRESS_LEN * (hold_cycles + 1)) {
@@ -556,7 +402,6 @@ inline void handle_reset_button () {
         ++hold_cycles;
         next_mode ();
       }
-#endif
     }
 
     reset_pressed_before = (reset_level != reset_inactive_level);
@@ -632,7 +477,6 @@ void setup () {
   pinMode (PAD_LED_PIN, OUTPUT);
 #endif
 
-#if !defined __AVR_ATtinyX5__
   // Init video mode
   pinMode (VIDEOMODE_PIN, OUTPUT);
   pinMode (LANGUAGE_PIN, OUTPUT);
@@ -648,7 +492,6 @@ void setup () {
 #endif
   set_mode (current_mode);
   mode_last_changed_time = 0;   // No need to save what we just loaded
-#endif
 
   // Prepare to read pad
   setup_pad ();
@@ -658,344 +501,35 @@ void setup () {
 }
 
 inline void setup_pad () {
-  // Set port directions
-#if defined __AVR_ATtinyX5__
-  DDRB &= ~((1 << DDB2) | (1 << DDB1) | (1 << DDB0));
-#elif defined __AVR_ATtinyX4__
-  DDRA &= ~((1 << DDA6) | (1 << DDA2) | (1 << DDA1));
-  DDRB &= ~((1 << DDB1) | (1 << DDB0));
-#elif defined __AVR_ATtinyX61__
-  DDRA &= ~((1 << DDA6) | (1 << DDA5) | (1 << DDA4) | (1 << DDA3) | (1 << DDA2) | (1 << DDA1) | (1 << DDA0));
-#elif defined __AVR_ATtinyX313__
-  DDRD &= ~((1 << DDD6) | (1 << DDD5) | (1 << DDD4) | (1 << DDD3) | (1 << DDD2) | (1 << DDD1) | (1 << DDD0));
-#elif defined ARDUINO328
-  //~ DDRC &= ~((1 << DDC1) | (1 << DDC0));
+  // Set port directions: All button lines are INPUTs
   DDRD &= ~((1 << DDD7) | (1 << DDD6) | (1 << DDD5) | (1 << DDD4) | (1 << DDD3) | (1 << DDD2) | (1 << DDD0));
 
-// Output
+  // The SIGNALLING line is an output
   DDRB |= (1 << DDB4);
   PORTB |= (1 << DDB4);
 
-  //~ attachInterrupt (digitalPinToInterrupt (2), on_select_changed, CHANGE);
-  EICRA |= (1 << ISC00);
-  EIMSK |= (1 << INT0);
-  interrupts ();
-#endif
+  /* Enable interrupts: we can't use attachInterrupt() here, since our ISR is
+   * going to be bare
+   */
+  EICRA |= (1 << ISC00);    // Trigger interrupt on CHANGE
+  EIMSK |= (1 << INT0);     // Enable interrupt 0 (i.e.: on pin 2)
+  interrupts ();            // Enable all interrupts, probably redundant
 }
 
 /******************************************************************************/
 
-// HIGH -> Not pressed
-volatile byte g_buttons_1 = 0xFF;
-volatile byte g_buttons_2 = 0xFF;
-volatile byte g_buttons_3 = 0xFF;
 
-// ISR
-void on_select_changed () {
-//~ ISR (INT0_vect) {
-  PORTB |= (1 << DDB4);
-
-  byte portd = PIND;
-
-  PORTB &= ~(1 << DDB4);
-  PORTB |= (1 << DDB4);
-
-  static PadState state = PS_INIT;
-
-  switch (state) {
-    case PS_INIT:
-      if (portd & (1 << PIND2)) {
-        // Select is high, it will be low next time we're called
-        state = PS_LO;
-      } else {
-        // Vice-versa
-        state = PS_HI;
-      }
-      break;
-    case PS_HI:
-      if (portd & (1 << PIND2)) {
-        g_buttons_1 = portd;
-        state = PS_LO;
-      } else {
-        state = PS_INIT;
-      }
-      break;
-    case PS_LO:
-      // We expect SELECT to be LOW
-      if (portd & (1 << PIND2)) {
-        state = PS_INIT;
-      } else {
-        // Read UP and DOWN
-        if ((portd & 0xF0) == 0) {
-          /* U/D/L/R are all low at the same time, this means we have a 6-button
-           * pad
-           */
-          state = PS_6BTN_XYZ;
-        } else {
-          // We have Start & A (and UP & DOWN, in case)
-          g_buttons_2 = portd;
-          state = PS_HI;
-        }
-      }
-      break;
-    case PS_6BTN_XYZ:
-      // We expect SELECT to be HIGH
-      if (portd & (1 << PIND2)) {
-        // We have MODE, X, Y & Z
-        g_buttons_3 = portd;
-        state = PS_6BTN_ALL_HI;
-      } else {
-        state = PS_INIT;
-      }
-      break;
-    case PS_6BTN_ALL_HI:
-      /* U/D/L/R are all low at the same time, just wait for SELECT to go high
-       * again
-       *
-       * We expect SELECT to be LOW
-       */
-      if (portd & (1 << PIND2)) {
-        state = PS_INIT;
-      } else {
-        state = PS_HI;
-      }
-      break;
-  }
-
-  PORTB &= ~(1 << DDB4);
-  if ((portd & (1 << PIND2)) != (PIND & (1 << PIND2))) {
-    PORTB |= (1 << DDB4);
-  }
-}
-
-/*
- * The basic idea here is to make up a byte where each bit represents the state
- * of a button, where 1 means pressed, for commodity's sake. The bit-button
- * mapping is defined in the PadButton enum above.
- *
- * To get consistent readings, we should really read all of the pad pins at
- * once, since some of them must be interpreted according to the value of the
- * SELECT signal. In order to do this we could connect all pins to a single port
- * of our MCU, but this is a luxury we cannot often afford, for various reasons.
- * Luckily, the UP and DOWN signals do not depend upon the SELECT pins, so we
- * can read them anytime, and this often takes us out of trouble.
- *
- * Note that printing readings through serial slows down the code so much that
- * it misses most of the readings with SELECT low!
+/* The basic idea here is to make up a word (i.e.: 2 bytes) where each bit
+ * represents the state of a button, with 1 meaning pressed, for commodity's
+ * sake. The bit-button mapping is defined in the PadButton enum above.
  */
-#if 0
-inline word read_pad () {
-  static PadState state = PS_INIT;
-  static word buttons = 0;
-
-#if defined __AVR_ATtinyX5__
-  /*
-   * On ATtinyX4's all we can do is read A/B and Start/C together with SELECT:
-   * - Pin 6 (A/B) -> PB0
-   * - Pin 7 (SELECT) -> PB2
-   * - Pin 9 (Start/C) -> PB1
-   */
-  byte portb = read_pad_port (&PINB);
-  if (portb & (1 << PINB2)) {
-    // Select is high, we have C & B
-    buttons = (buttons & 0xCF)
-            | ((~portb & ((1 << PINB1) | (1 << PINB0))) << 4);
-  } else {
-    // Select is low, we have Start & A
-    buttons = (buttons & 0x3F)
-            | ((~portb & ((1 << PINB1) | (1 << PINB0))) << 6);
-  }
-#elif defined __AVR_ATtinyX4__
-  /*
-   * On ATtinyX4's we read A/B and Start/C together with SELECT through PORTA.
-   * Then we read UP and DOWN through PORTB.
-   * Connections are made like this to only use pins left spare from the D4s/Seb
-   * mod. In principle, we could read all of them through a single port (which
-   * would also allow us to read LEFT and RIGHT instead of UP and DOWN) if we
-   * reorganize all the connections.
-   *
-   * If connections are made as per the diagram above we have:
-   * - Pin 1 (UP) -> PB0
-   * - Pin 2 (DOWN) -> PB1
-   * - Pin 6 (A/B) -> PA1
-   * - Pin 7 (SELECT) -> PA6
-   * - Pin 9 (Start/C) -> PA2
-   */
-
-  // Update UP and DOWN, which are always valid and on PORTB alone
-  buttons = (buttons & 0xFC) | (~PINB & ((1 << PINB1) | (1 << PINB0)));
-
-  // Then deal with the rest
-  byte porta = read_pad_port (&PINA);
-  if (porta & (1 << PINA6)) {
-    // Select is high, we have C & B
-    buttons = (buttons & 0xCF)
-            | ((~porta & ((1 << PINA2) | (1 << PINA1))) << 3)
-            ;
-  } else {
-    // Select is low, we have Start & A
-    buttons = (buttons & 0x3F)
-            | ((~porta & ((1 << PINA2) | (1 << PINA1))) << 5)
-            ;
-  }
-#elif defined __AVR_ATtinyX61__
-  /*
-   * On ATtinyX61 we have all the buttons on a single port, so we can read all
-   * of them at once. We still have to play a bit with the bits (pun intended)
-   * since we want to have SELECT connected to INT1, which will probably help
-   * with the 6-button pad.
-   */
-
-  byte porta = read_pad_port (&PINA);
-  if (porta & (1 << PINA2)) {
-    // Select is high, we have the 4 directions, C & B
-    buttons = (buttons & 0xC0)
-            | ((~porta & ((1 << PINA6) | (1 << PINA5) | (1 << PINA4) | (1 << PINA3))) >> 1)
-            | (~porta & ((1 << PINA1) | (1 << PINA0)))
-            ;
-  } else {
-    // Select is low, we have Up, Down, Start & A
-    buttons = (buttons & 0x30)
-            | ((~porta & ((1 << PINA6) | (1 << PINA5))) << 1)
-            | (~porta & ((1 << PINA1) | (1 << PINA0)))
-            ;
-  }
-#elif defined __AVR_ATtinyX313__
-  /*
-   * Same as above, but with port D instead of port A. SELECT is connected to
-   * INT0.
-   */
-
-  byte portd = read_pad_port (&PIND);
-  if (portd & (1 << PIND2)) {
-    // Select is high, we have the 4 directions, C & B
-    buttons = (buttons & 0xC0)
-            | ((~portd & ((1 << PIND6) | (1 << PIND5) | (1 << PIND4) | (1 << PIND3))) >> 1)
-            | (~portd & ((1 << PIND1) | (1 << PIND0)))
-            ;
-  } else {
-    // Select is low, we have Up, Down, Start & A
-    buttons = (buttons & 0x30)
-            | ((~portd & ((1 << PIND6) | (1 << PIND5))) << 1)
-            | (~portd & ((1 << PIND1) | (1 << PIND0)))
-            ;
-  }
-#elif defined ARDUINO328
-  //~ static PadState old_state = PS_INIT;
-  //~ if (state != old_state) {
-    //~ debug ("Pad state = ");
-    //~ debugln (state);
-    //~ old_state = state;
-  //~ }
-
-  // Wait for signals to be stable
-  //~ byte portd = read_pad_port (&PIND);
-
-//~ if (newData) {
-newData = true;
-for (byte i = 0; i < 2; i++) {
-  switch (state) {
-    case PS_INIT:
-      if (portd & (1 << PIND2)) {
-        // Select is high
-        state = PS_HI;
-      } else {
-        // Low
-        state = PS_LO;
-      }
-      break;
-    case PS_HI:
-      if (portd & (1 << PIND2)) {
-        // Select is high, we have Right, Left, C & B
-        buttons = (buttons & 0xFFC3)
-                | ((~portd & ((1 << PIND6) | (1 << PIND5) | (1 << PIND4) | (1 << PIND3))) >> 1)
-                ;
-
-        // Update UP and DOWN, which are always valid and on PORTC alone
-        buttons = (buttons & 0xFFFC)
-                | (~portc & ((1 << PINC1) | (1 << PINC0)))
-                ;
-      } else {
-        state = PS_LO;
-      }
-      break;
-    case PS_LO:
-      if (portd & (1 << PIND2)) {
-        state = PS_HI;
-      } else {        // Select is low
-        // Read UP and DOWN
-        byte ud = portc & ((1 << PINC1) | (1 << PINC0));
-        byte lr = portd & ((1 << PIND4) | (1 << PIND3));
-        //~ debug ("UD = ");
-        //~ debugln (ud, BIN);
-        //~ debug ("LR = ");
-        //~ debugln (lr, BIN);
-        if (ud == 0 && lr == 0) {
-          /* U/D/L/R are all low at the same time, this means we have a 6-button
-           * pad
-           */
-          state = PS_6BTN_ALL_LO;
-        } else {
-          // We have Start & A
-          buttons = (buttons & 0xFF3F)
-                  | ((~portd & ((1 << PIND6) | (1 << PIND5))) << 1)
-                  ;
-
-          // We can also update UP and DOWN
-          buttons = (buttons & 0xFFFC) | (~ud & ((1 << PINC1) | (1 << PINC0)));
-        }
-      }
-      break;
-    //~ } case PS_6BTN_ALL_LO:
-      //~ // Just wait for SELECT to go high again
-      //~ if (portd & (1 << PIND2)) {
-        //~ state = PS_6BTN_XYZ;
-      //~ }
-      //~ break;
-    case PS_6BTN_XYZ:
-      if (portd & (1 << PIND2)) {
-        // We have Z and Y on pins 1/2
-        //~ buttons = (buttons & 0xF3FF)
-                //~ | (((~(word) PINC) & ((1 << PINC1) | (1 << PINC0))) << 10)
-                //~ ;
-
-        // We have X and MODE on pins 3/4
-        //~ buttons = (buttons & 0xFCFF)
-                //~ | (((~(word) portd) & ((1 << PIND6) | (1 << PIND5))) << 3)
-                //~ ;
-      } else {
-        state = PS_6BTN_ALL_HI;
-      }
-      break;
-    case PS_6BTN_ALL_HI:
-      /* U/D/L/R are all low at the same time, just wait for SELECT to go high
-       * again
-       */
-      if (portd & (1 << PIND2)) {
-        state = PS_HI;
-      }
-      break;
-  }
-}
-newData = false;
-//~ }
-#endif
-
-  return buttons;
-}
-#endif
-
-
-
 word read_pad () {
-  //~ word buttons = ((~g_buttons_1 & ((1 << PIND6) | (1 << PIND5) | (1 << PIND4) | (1 << PIND3))) >> 1)
-               //~ | ((~g_buttons_2 & ((1 << PIND6) | (1 << PIND5))) << 1)
-               //~ | (~g_buttons_1 & ((1 << PINC1) | (1 << PINC0)))
-               //~ ;
-  //~ debugln (g_buttons_1);
+  // Invert all bits, since we want to use 1 for pressed
   byte b1 = ~g_buttons_1;
   byte b2 = ~g_buttons_2;
   byte b3 = ~g_buttons_3;
+
+  // Compose all bytes into a single word, respecting the order in PadButton
   word buttons = (b1 & 0xF8) | ((b1 & 0x01) << 2)
                | ((b2 & 0x08) >> 2) | (b2 & 0x01)
                | (((word) (b3 & 0xF0)) << 4)
