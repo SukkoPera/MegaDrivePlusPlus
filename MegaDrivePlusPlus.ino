@@ -216,23 +216,6 @@ const byte mode_led_colors[][MODES_NO] = {
 };
 #endif
 
-enum __attribute__ ((__packed__)) PadState {
-  PS_INIT,            // Initialization
-  PS_HI,              // Select is high (U/D/L/R/B/C)
-  PS_LO,              // Select is low (U/D/A/Start)
-
-  // The following states are only triggered by 6-button pads
-  //~ PS_6BTN_ALL_LO,     // Pins 1/2/3/4 are all LOW
-  PS_6BTN_XYZ,        // X/Y/Z/Mode
-  PS_6BTN_ALL_HI      // Pins 1/2/3/4 are all HIGH
-};
-
-#ifdef LOW_FLASH
-  // A bit of hack, but seems to work fine and saves quite a bit of flash memory
-  #define analogWrite digitalWrite
-#endif
-
-
 // Video mode
 VideoMode current_mode;
 unsigned long mode_last_changed_time;
