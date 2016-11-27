@@ -1,14 +1,32 @@
-; General tips: http://nerdralph.blogspot.it/2014/07/writing-avr-interrupt-service-routines.html
+; ******************************************************************************
+; * This file is part of MegaDrive++.                                          *
+; *                                                                            *
+; * Copyright (C) 2015-2016 by SukkoPera <software@sukkology.net>              *
+; *                                                                            *
+; * MegaDrive++ is free software: you can redistribute it and/or modify        *
+; * it under the terms of the GNU General Public License as published by       *
+; * the Free Software Foundation, either version 3 of the License, or          *
+; * (at your option) any later version.                                        *
+; *                                                                            *
+; * MegaDrive++ is distributed in the hope that it will be useful,             *
+; * but WITHOUT ANY WARRANTY; without even the implied warranty of             *
+; * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the              *
+; * GNU General Public License for more details.                               *
+; *                                                                            *
+; * You should have received a copy of the GNU General Public License          *
+; * along with MegaDrive++. If not, see <http://www.gnu.org/licenses/>.        *
+; ******************************************************************************
+;
+; MegaDrive++ - Universal Region mod, 50/60 Hz switch and In-Game-Reset (IGR)
+; for Sega Mega Drive (AKA Genesis)
+;
+; Please refer to the GitHub page and wiki for any information:
+; https://github.com/SukkoPera/MegaDrivePlusPlus
+;
+; General ISR writing tips: http://nerdralph.blogspot.it/2014/07/writing-avr-interrupt-service-routines.html
 ; Instruction reference: http://www.atmel.com/webdoc/avrassembler/avrassembler.wb_RJMP.html
 ; Register usage: https://gcc.gnu.org/wiki/avr-gcc#Register_Layout
 ; State machine implemented as per: http://www.avrfreaks.net/forum/how-do-you-make-jump-table-avr-assembly
-
-; Call-used registers (r18-r27, r30-r31): May be allocated by gcc for local data. You may use them freely in assembler subroutines. Calling C subroutines can clobber any of them - the caller is responsible for saving and restoring.
-; Call-saved registers (r2-r17, r28-r29): May be allocated by gcc for local data. Calling C subroutines leaves them unchanged. Assembler subroutines are responsible for saving and restoring these registers, if changed. r29:r28 (Y pointer) is used as a frame pointer (points to local data on stack) if necessary. The requirement for the callee to save/preserve the contents of these registers even applies in situations where the compiler assigns them for argument passing.
-; Fixed registers (r0, r1): Never allocated by gcc for local data, but often used for fixed purposes:
-; r0 - temporary register, can be clobbered by any C code (except interrupt handlers which save it), may be used to remember something for a while within one piece of assembler code
-; r1 - assumed to be always zero in any C code, may be used to remember something for a while within one piece of assembler code, but must then be cleared after use (clr r1). This includes any use of the [f]mul[s[u]] instructions, which return their result in r1:r0. Interrupt handlers save and clear r1 on entry, and restore r1 on exit (in case it was non-zero).
-
 
 #include <avr/io.h>
 
