@@ -183,7 +183,7 @@ enum __attribute__ ((__packed__)) PadButton {
 #ifdef ENABLE_SERIAL_DEBUG
   #include <SendOnlySoftwareSerial.h>
 
-  SendOnlySoftwareSerial swSerial(1);
+  SendOnlySoftwareSerial swSerial (1);
 
   #define dstart(spd) swSerial.begin (spd)
   #define debug(...) swSerial.print (__VA_ARGS__)
