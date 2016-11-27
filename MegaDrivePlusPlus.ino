@@ -198,11 +198,6 @@ enum __attribute__ ((__packed__)) PadButton {
   #include <EEPROM.h>
 #endif
 
-extern "C" {
-  void readpad ();
-}
-
-
 enum __attribute__ ((__packed__)) VideoMode {
   EUR,
   USA,
