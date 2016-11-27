@@ -63,7 +63,7 @@ state:      .byte 0
 #define R_STATE r26
 
 
-INT0_vect:	; Save context
+INT0_vect:  ; Save context
             push R_PORT
             in R_PORT, _SFR_IO_ADDR (SREG)
             push R_PORT
@@ -96,47 +96,47 @@ INT0_vect:	; Save context
             breq ps_all_hi
 
 ps_init:
-						sbrs R_PORT, SEL_BIT
+            sbrs R_PORT, SEL_BIT
             rjmp init_hi
             ldi R_STATE, PS_LO          ; Select is high, it will be low next time we're called
             rjmp sm_end
-init_hi:		ldi R_STATE, PS_HI
-						rjmp sm_end
+init_hi:    ldi R_STATE, PS_HI
+            rjmp sm_end
 
 ps_hi:
-						sbrs R_PORT, SEL_BIT        ; If SELECT is not HIGH...
-						rjmp sm_reset               ; ... Reset SM
+            sbrs R_PORT, SEL_BIT        ; If SELECT is not HIGH...
+            rjmp sm_reset               ; ... Reset SM
             sts g_buttons_1, R_PORT     ; Save port status to g_buttons_1
             ldi R_STATE, PS_LO          ; SELECT will be low next time we're called
             rjmp sm_end
 
 ps_lo:
-						sbrc R_PORT, SEL_BIT        ; SELECT must be LOW
-						rjmp sm_reset
-						push R_PORT									; Save R_PORT temporarily
-            andi R_PORT, 0xF0						; Check if U/D/L/R are all low at the same time (This sets SREG flags)
-            pop R_PORT									; Restore old R_PORT (Does not change SREG)
-            breq have6btn								; If == 0, U/D/L/R are all low, this means we have a 6-button pad
-            sts g_buttons_2, R_PORT			; Else, we have Start & A (and UP & DOWN, in case)
+            sbrc R_PORT, SEL_BIT        ; SELECT must be LOW
+            rjmp sm_reset
+            push R_PORT                 ; Save R_PORT temporarily
+            andi R_PORT, 0xF0           ; Check if U/D/L/R are all low at the same time (This sets SREG flags)
+            pop R_PORT                  ; Restore old R_PORT (Does not change SREG)
+            breq have6btn               ; If == 0, U/D/L/R are all low, this means we have a 6-button pad
+            sts g_buttons_2, R_PORT     ; Else, we have Start & A (and UP & DOWN, in case)
             ldi R_STATE, PS_HI
             rjmp sm_end
-have6btn:		ldi R_STATE, PS_6BTN_XYZ		; No useful data at this point with 6-button pads, just go to next state
+have6btn:   ldi R_STATE, PS_6BTN_XYZ    ; No useful data at this point with 6-button pads, just go to next state
             rjmp sm_end
 
 ps_xyz:
-						sbrs R_PORT, SEL_BIT				; SELECT must be HIGH
-						rjmp sm_reset
+            sbrs R_PORT, SEL_BIT        ; SELECT must be HIGH
+            rjmp sm_reset
             sts g_buttons_3, R_PORT
             ldi R_STATE, PS_6BTN_ALL_HI
             rjmp sm_end
 
 ps_all_hi:
-						sbrc R_PORT, SEL_BIT				; SELECT must be LOW
-						rjmp sm_reset
+            sbrc R_PORT, SEL_BIT        ; SELECT must be LOW
+            rjmp sm_reset
             ldi R_STATE, PS_HI
             rjmp sm_end
 
-sm_reset:		; SELECT did not have the expected level, reset SM
+sm_reset:   ; SELECT did not have the expected level, reset SM
 #ifdef ENABLE_SIGNALLING
             cbi SIG_IOPORT, SIG_BIT
             sbi SIG_IOPORT, SIG_BIT
@@ -145,7 +145,7 @@ sm_reset:		; SELECT did not have the expected level, reset SM
             cbi SIG_IOPORT, SIG_BIT
             sbi SIG_IOPORT, SIG_BIT
 #endif
-						ldi R_STATE, PS_INIT
+            ldi R_STATE, PS_INIT
             ; rjmp sm_end
 
             ; End of state machine, save state to RAM
