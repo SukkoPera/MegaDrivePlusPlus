@@ -30,8 +30,6 @@
 
 #include <avr/io.h>
 
-; correct for avr/io.h 0x20 port offset for I/O instructions
-;~ #define ioPort(x) (x - 0x20)
 
 .section .data
 state:      .byte 0
