@@ -525,13 +525,20 @@ inline void setup_pad () {
  */
 word read_pad () {
   // Invert all bits, since we want to use 1 for pressed
-  byte b1 = ~g_buttons_1;
-  byte b2 = ~g_buttons_2;
-  byte b3 = ~g_buttons_3;
+  byte b1 = ~g_buttons_1;     // Select HIGH......: UDLRBxxC
+  byte b2 = ~g_buttons_2;     // Select LOW.......: UDxxAxxS
+  byte b3 = ~g_buttons_3;     // Select PULSE-3...: ZYXMxxxx
 
-  // Compose all bytes into a single word, respecting the order in PadButton
-  word buttons = (b1 & 0xF8) | ((b1 & 0x01) << 2)
-               | ((b2 & 0x08) >> 2) | (b2 & 0x01)
+  /* Compose all bytes into a single word, respecting the order in PadButton.
+   * Note that we take UP and DOWN from b2 because sometimes b1 will contain
+   * spurious data from b3, i.e.: Keeping X pressed reports LEFT, Y reports
+   * DOWN, etc... This way we restrict the problem to X and MODE.
+   *
+   * It would be great to eliminate the problem completely, but we still haven't
+   * found a way :(.
+   */
+  word buttons = (b1 & 0x38) | ((b1 & 0x01) << 2)
+               | (b2 & 0xC0) | ((b2 & 0x08) >> 2) | (b2 & 0x01)
                | (((word) (b3 & 0xF0)) << 4)
                ;
 
