@@ -506,8 +506,6 @@ inline void setup_pad () {
   pinMode (7, INPUT);
 
   // The SIGNALLING line is an output
-  //~ DDRB |= (1 << DDB4);
-  //~ PORTB |= (1 << DDB4);
   pinMode (12, OUTPUT);
 
   /* Enable interrupts: we can't use attachInterrupt() here, since our ISR is
