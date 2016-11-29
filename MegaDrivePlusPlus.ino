@@ -500,8 +500,9 @@ inline void setup_pad () {
   DDRD &= ~((1 << DDD7) | (1 << DDD6) | (1 << DDD5) | (1 << DDD4) | (1 << DDD3) | (1 << DDD2) | (1 << DDD0));
 
   // The SIGNALLING line is an output
-  DDRB |= (1 << DDB4);
-  PORTB |= (1 << DDB4);
+  //~ DDRB |= (1 << DDB4);
+  //~ PORTB |= (1 << DDB4);
+  pinMode (12, OUTPUT);
 
   /* Enable interrupts: we can't use attachInterrupt() here, since our ISR is
    * going to be bare
