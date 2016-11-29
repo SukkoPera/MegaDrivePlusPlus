@@ -48,7 +48,7 @@ state:      .byte 0
 #define SIG_IOPORT _SFR_IO_ADDR (PORTB)
 #define SIG_BIT DDB4
 
-#define ENABLE_SIGNALLING
+;~ #define ENABLE_SIGNALLING
 
 #define PS_INIT 0          ; Initialization
 #define PS_HI 1            ; Select is high (U/D/L/R/B/C)
