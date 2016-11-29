@@ -61,7 +61,7 @@ state:      .byte 0
 #define R_STATE r26
 
 
-INT0_vect:  ; Save context
+INT0_vect:	; Save context
 						push R_PORT
 						in R_PORT, _SFR_IO_ADDR (SREG)
 						push R_PORT
@@ -117,7 +117,7 @@ ps_lo:
 						sts g_buttons_2, R_PORT     ; Else, we have Start & A (and UP & DOWN, in case)
 						ldi R_STATE, PS_HI
 						rjmp sm_end
-have6btn:   ldi R_STATE, PS_6BTN_XYZ    ; No useful data at this point with 6-button pads, just go to next state
+have6btn:		ldi R_STATE, PS_6BTN_XYZ    ; No useful data at this point with 6-button pads, just go to next state
 						rjmp sm_end
 
 ps_xyz:
@@ -133,7 +133,7 @@ ps_all_hi:
 						ldi R_STATE, PS_HI
 						rjmp sm_end
 
-sm_reset:   ; SELECT did not have the expected level, reset SM
+sm_reset:		; SELECT did not have the expected level, reset SM
 #ifdef ENABLE_SIGNALLING
 						cbi SIG_IOPORT, SIG_BIT
 						sbi SIG_IOPORT, SIG_BIT
@@ -146,7 +146,7 @@ sm_reset:   ; SELECT did not have the expected level, reset SM
 						; rjmp sm_end
 
 						; End of state machine, save state to RAM
-sm_end:     sts state, R_STATE
+sm_end:			sts state, R_STATE
 
 #ifdef ENABLE_SIGNALLING
 						cbi SIG_IOPORT, SIG_BIT
