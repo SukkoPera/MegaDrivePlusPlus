@@ -111,9 +111,8 @@ ps_hi:
 ps_lo:
 						sbrc R_PORT, SEL_BIT        ; SELECT must be LOW
 						rjmp sm_reset
-						push R_PORT                 ; Save R_PORT temporarily
-						andi R_PORT, 0xF0           ; Check if U/D/L/R are all low at the same time (This sets SREG flags)
-						pop R_PORT                  ; Restore old R_PORT (Does not change SREG)
+						mov R_STATE, R_PORT         ; Abuse R_STATE, we don't need it at this time
+						andi R_STATE, 0xF0          ; Check if U/D/L/R are all low at the same time (This sets SREG flags)
 						breq have6btn               ; If == 0, U/D/L/R are all low, this means we have a 6-button pad
 						sts g_buttons_2, R_PORT     ; Else, we have Start & A (and UP & DOWN, in case)
 						ldi R_STATE, PS_HI
