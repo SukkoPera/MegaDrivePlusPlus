@@ -497,7 +497,13 @@ void setup () {
 
 inline void setup_pad () {
   // Set port directions: All button lines are INPUTs
-  DDRD &= ~((1 << DDD7) | (1 << DDD6) | (1 << DDD5) | (1 << DDD4) | (1 << DDD3) | (1 << DDD2) | (1 << DDD0));
+  pinMode (0, INPUT);
+  pinMode (2, INPUT);
+  pinMode (3, INPUT);
+  pinMode (4, INPUT);
+  pinMode (5, INPUT);
+  pinMode (6, INPUT);
+  pinMode (7, INPUT);
 
   // The SIGNALLING line is an output
   //~ DDRB |= (1 << DDB4);
