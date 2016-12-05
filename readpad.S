@@ -132,10 +132,10 @@ ps_xyz:
 						rjmp sm_end
 
 ps_all_hi:
-						sbrc R_PORT, SEL_BIT        ; SELECT must be LOW
-						rjmp sm_reset
 						ldi R_STATE, PS_HI
+						sbrs R_PORT, SEL_BIT        ; SELECT must be LOW
 						rjmp sm_end
+						; rjmp sm_reset
 
 sm_reset:		; SELECT did not have the expected level, reset SM
 #ifdef ENABLE_SIGNALLING
