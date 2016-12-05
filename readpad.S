@@ -26,13 +26,8 @@
 ; General ISR writing tips: http://nerdralph.blogspot.it/2014/07/writing-avr-interrupt-service-routines.html
 ; Instruction reference: http://www.atmel.com/webdoc/avrassembler/avrassembler.wb_RJMP.html
 ; Register usage: https://gcc.gnu.org/wiki/avr-gcc#Register_Layout
-; State machine implemented as per: http://www.avrfreaks.net/forum/how-do-you-make-jump-table-avr-assembly
 
 #include <avr/io.h>
-
-
-.section .data
-state:      .byte 0
 
 .extern g_buttons_1
 .extern g_buttons_2
