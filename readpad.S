@@ -86,15 +86,15 @@ INT0_vect:	; Save context
 						; State machine start
 						; Note that we do NOT implement a jump table with ijmp here, as it
 						; would actually be slower!
-						cpi R_STATE, 0
+						cpi R_STATE, PS_INIT
 						breq ps_init
-						dec R_STATE
+						cpi R_STATE, PS_HI
 						breq ps_hi
-						dec R_STATE
+						cpi R_STATE, PS_LO
 						breq ps_lo
-						dec R_STATE
+						cpi R_STATE, PS_6BTN_XYZ
 						breq ps_xyz
-						dec R_STATE
+						cpi R_STATE, PS_6BTN_ALL_HI
 						breq ps_all_hi
 
 ps_init:
