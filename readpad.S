@@ -60,17 +60,22 @@ state:      .byte 0
 #define R_PORT r24
 #define R_STATE r26
 
+#define IO_TREG1 _SFR_IO_ADDR (GPIOR0)
+#define IO_TREG2 _SFR_IO_ADDR (GPIOR1)
+#define IO_TREG3 _SFR_IO_ADDR (GPIOR2)
 
 INT0_vect:	; Save context
-						push R_PORT
-						in R_PORT, _SFR_IO_ADDR (SREG)
-						push R_PORT
-						push R_STATE
+						out IO_TREG1, R_STATE
+						in R_STATE, _SFR_IO_ADDR (SREG)
+						out IO_TREG2, R_STATE
+						in R_STATE, IO_TREG3				; Load SM state
+						out IO_TREG3, R_PORT
 
 #ifdef ENABLE_SIGNALLING
 						sbi SIG_IOPORT, SIG_BIT
 #endif
 
+						; Read controller, all at once!
 						in R_PORT, PAD_IOPORT
 
 #ifdef ENABLE_SIGNALLING
@@ -81,7 +86,6 @@ INT0_vect:	; Save context
 						; State machine start
 						; Note that we do NOT implement a jump table with ijmp here, as it
 						; would actually be slower!
-						lds R_STATE, state
 						cpi R_STATE, 0
 						breq ps_init
 						dec R_STATE
@@ -145,17 +149,15 @@ sm_reset:		; SELECT did not have the expected level, reset SM
 						ldi R_STATE, PS_INIT
 						; rjmp sm_end
 
-						; End of state machine, save state to RAM
-sm_end:			sts state, R_STATE
-
+sm_end:			; End of state machine
 #ifdef ENABLE_SIGNALLING
 						cbi SIG_IOPORT, SIG_BIT
 #endif
-
 						; Restore context
-						pop R_STATE
-						pop R_PORT
-						out _SFR_IO_ADDR (SREG), R_PORT
-						pop R_PORT
+						in R_PORT, IO_TREG3
+						out IO_TREG3, R_STATE				; IO_TREG3 is no longer needed, store SM state
+						in R_STATE, IO_TREG2
+						out _SFR_IO_ADDR (SREG), R_STATE
+						in R_STATE, IO_TREG1
 
 						reti
