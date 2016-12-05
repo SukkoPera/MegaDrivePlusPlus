@@ -125,7 +125,7 @@ enum __attribute__ ((__packed__)) PadButton {
 #define MODE_ROM_OFFSET 42
 
 // Time to wait after mode change before saving the new mode (milliseconds)
-#define MODE_SAVE_DELAY 5000L
+#define MODE_SAVE_DELAY 3000L
 
 // Force the reset line level when active. Undefine to enable auto-detection.
 //#define FORCE_RESET_ACTIVE_LEVEL LOW
