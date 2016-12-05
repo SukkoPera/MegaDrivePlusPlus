@@ -98,11 +98,9 @@ INT0_vect:	; Save context
 						breq ps_all_hi
 
 ps_init:
+						ldi R_STATE, PS_LO          ; Assume select is HIGH, it will be low next time we're called
 						sbrs R_PORT, SEL_BIT
-						rjmp init_hi
-						ldi R_STATE, PS_LO          ; Select is high, it will be low next time we're called
-						rjmp sm_end
-init_hi:    ldi R_STATE, PS_HI
+						ldi R_STATE, PS_HI					; Whoops, it was LOW, so it will be high next time
 						rjmp sm_end
 
 ps_hi:
