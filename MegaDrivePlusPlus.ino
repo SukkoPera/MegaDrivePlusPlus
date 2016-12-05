@@ -157,7 +157,7 @@ enum __attribute__ ((__packed__)) PadButton {
  * Basically, the single led is blinked 1-3 times according to which mode is set
  * (1 is EUR, see enum VideoMode below).
  */
-//#define MODE_LED_SINGLE_PIN 3
+//#define MODE_LED_SINGLE_PIN A1
 
 /* Presses of the reset button longer than this amount of milliseconds will
  * switch to the next mode, shorter presses will reset the console.
