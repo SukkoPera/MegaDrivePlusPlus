@@ -43,6 +43,32 @@
  *                    |14  8  9 15| LED Red
  *                    `-----------'
  *
+ *
+ * Arduino Nano:
+ *
+ *                                 +-----+
+ *                    +------------| USB |------------+
+ *                    |            +-----+            |
+ *     (Built-in LED) | [ ]D13/SCK        MISO/D12[ ] |
+ *                    | [ ]3.3V           MOSI/D11[X]~| LED Blue
+ *                    | [ ]V.ref     ___    SS/D10[X]~| LED Green
+ *                    | [ ]A0       / N \       D9[X]~| LED Red
+ *                    | [ ]A1      /  A  \      D8[ ] |
+ *          Reset Out | [X]A2      \  N  /      D7[X] | Pad Port Pin 1
+ *           Reset In | [X]A3       \_0_/       D6[X]~| Pad Port Pin 2
+ * JP3/4 (Video Mode) | [X]A4/SDA               D5[X]~| Pad Port Pin 3
+ *   JP1/2 (Language) | [X]A5/SCL               D4[X] | Pad Port Pin 4
+ *                    | [ ]A6              INT1/D3[X]~| Pad Port Pin 6
+ *                    | [ ]A7              INT0/D2[X] | Pad Port Pin 7
+ *                +5V | [X]5V                  GND[X] | GND
+ *                    | [ ]RST                 RST[ ] |
+ *                    | [ ]GND   5V MOSI GND   TX1[ ] |
+ *                    | [ ]Vin   [ ] [ ] [ ]   RX0[X] | Pad Port Pin 9
+ *                    |          [ ] [ ] [ ]          |
+ *                    |          MISO SCK RST         |
+ *                    | NANO-V3                       |
+ *                    +-------------------------------+
+ *
  * Wiring considerations:
  * - We read the pad port status through an ISR triggered by a level change on
  *   the SELECT line. Said line is triggered very quickly for 6-button pads (~4
