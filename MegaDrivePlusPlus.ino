@@ -104,18 +104,18 @@
 
 // DON'T TOUCH THIS! Just look at it for the button names you can use below!
 enum __attribute__ ((__packed__)) PadButton {
-  MD_BTN_Z =     1 << 11,
+	MD_BTN_Z =     1 << 11,
 	MD_BTN_Y =     1 << 10,
 	MD_BTN_X =     1 << 9,
 	MD_BTN_MODE =  1 << 8,
-  MD_BTN_UP =    1 << 7,
-  MD_BTN_DOWN =  1 << 6,
-  MD_BTN_LEFT =  1 << 5,
-  MD_BTN_RIGHT = 1 << 4,
-  MD_BTN_B =     1 << 3,
-  MD_BTN_C =     1 << 2,
-  MD_BTN_A =     1 << 1,
-  MD_BTN_START = 1 << 0
+	MD_BTN_UP =    1 << 7,
+	MD_BTN_DOWN =  1 << 6,
+	MD_BTN_LEFT =  1 << 5,
+	MD_BTN_RIGHT = 1 << 4,
+	MD_BTN_B =     1 << 3,
+	MD_BTN_C =     1 << 2,
+	MD_BTN_A =     1 << 1,
+	MD_BTN_START = 1 << 0
 };
 
 /* Button combo that enables the other combos.
@@ -207,38 +207,38 @@ enum __attribute__ ((__packed__)) PadButton {
 
 
 #ifdef ENABLE_SERIAL_DEBUG
-  #include <SendOnlySoftwareSerial.h>
+	#include <SendOnlySoftwareSerial.h>
 
-  SendOnlySoftwareSerial swSerial (1);
+	SendOnlySoftwareSerial swSerial (1);
 
-  #define dstart(spd) swSerial.begin (spd)
-  #define debug(...) swSerial.print (__VA_ARGS__)
-  #define debugln(...) swSerial.println (__VA_ARGS__)
+	#define dstart(spd) swSerial.begin (spd)
+	#define debug(...) swSerial.print (__VA_ARGS__)
+	#define debugln(...) swSerial.println (__VA_ARGS__)
 #else
-  #define dstart(...)
-  #define debug(...)
-  #define debugln(...)
+	#define dstart(...)
+	#define debug(...)
+	#define debugln(...)
 #endif
 
 #ifdef MODE_ROM_OFFSET
-  #include <EEPROM.h>
+	#include <EEPROM.h>
 #endif
 
 enum __attribute__ ((__packed__)) VideoMode {
-  EUR,
-  USA,
-  JAP,
-  MODES_NO // Leave at end
+	EUR,
+	USA,
+	JAP,
+	MODES_NO // Leave at end
 };
 
 // This will be handy
 #if (defined MODE_LED_R_PIN || defined MODE_LED_G_PIN || defined MODE_LED_B_PIN)
-  #define ENABLE_MODE_LED_RGB
+	#define ENABLE_MODE_LED_RGB
 
 const byte mode_led_colors[][MODES_NO] = {
-  MODE_LED_EUR_COLOR,
-  MODE_LED_USA_COLOR,
-  MODE_LED_JAP_COLOR
+	MODE_LED_EUR_COLOR,
+	MODE_LED_USA_COLOR,
+	MODE_LED_JAP_COLOR
 };
 #endif
 
@@ -264,182 +264,182 @@ volatile byte g_buttons_3 = 0xFF;
 
 inline void save_mode () {
 #ifdef MODE_ROM_OFFSET
-  if (mode_last_changed_time > 0 && millis () - mode_last_changed_time >= MODE_SAVE_DELAY) {
-    debug (F("Saving video mode to EEPROM: "));
-    debugln (current_mode);
+	if (mode_last_changed_time > 0 && millis () - mode_last_changed_time >= MODE_SAVE_DELAY) {
+		debug (F("Saving video mode to EEPROM: "));
+		debugln (current_mode);
 
-    byte saved_mode = EEPROM.read (MODE_ROM_OFFSET);
-    if (current_mode != saved_mode) {
-      EEPROM.write (MODE_ROM_OFFSET, static_cast<byte> (current_mode));
-    } else {
-      debugln (F("Mode unchanged, not saving"));
-    }
-    mode_last_changed_time = 0;    // Don't save again
+		byte saved_mode = EEPROM.read (MODE_ROM_OFFSET);
+		if (current_mode != saved_mode) {
+			EEPROM.write (MODE_ROM_OFFSET, static_cast<byte> (current_mode));
+		} else {
+			debugln (F("Mode unchanged, not saving"));
+		}
+		mode_last_changed_time = 0;    // Don't save again
 
-    // Blink led to tell the user that mode was saved
+		// Blink led to tell the user that mode was saved
 #ifdef ENABLE_MODE_LED_RGB
-    byte c = 0;
+		byte c = 0;
 
 #ifdef RGB_LED_COMMON_ANODE
-    c = 255 - c;
+		c = 255 - c;
 #endif
 
 #ifdef MODE_LED_R_PIN
-    analogWrite (MODE_LED_R_PIN, c);
+		analogWrite (MODE_LED_R_PIN, c);
 #endif
 
 #ifdef MODE_LED_G_PIN
-    analogWrite (MODE_LED_G_PIN, c);
+		analogWrite (MODE_LED_G_PIN, c);
 #endif
 
 #ifdef MODE_LED_B_PIN
-    analogWrite (MODE_LED_B_PIN, c);
+		analogWrite (MODE_LED_B_PIN, c);
 #endif
 
-    // Keep off for a bit
-    delay (200);
+		// Keep off for a bit
+		delay (200);
 
-    // Turn leds back on
-    update_mode_leds ();
+		// Turn leds back on
+		update_mode_leds ();
 #endif  // ENABLE_MODE_LED_RGB
 
 #ifdef MODE_LED_SINGLE_PIN
-    // Make one long flash
-    digitalWrite (MODE_LED_SINGLE_PIN, LOW);
-    delay (500);
-    digitalWrite (MODE_LED_SINGLE_PIN, HIGH);
+		// Make one long flash
+		digitalWrite (MODE_LED_SINGLE_PIN, LOW);
+		delay (500);
+		digitalWrite (MODE_LED_SINGLE_PIN, HIGH);
 #endif
-  }
+	}
 #endif  // MODE_ROM_OFFSET
 }
 
 inline void change_mode (int increment) {
-  // This also loops in [0, MODES_NO) backwards
-  VideoMode new_mode = static_cast<VideoMode> ((current_mode + increment + MODES_NO) % MODES_NO);
-  set_mode (new_mode);
+	// This also loops in [0, MODES_NO) backwards
+	VideoMode new_mode = static_cast<VideoMode> ((current_mode + increment + MODES_NO) % MODES_NO);
+	set_mode (new_mode);
 }
 
 inline void next_mode () {
-  change_mode (+1);
+	change_mode (+1);
 }
 
 inline void prev_mode () {
-  change_mode (-1);
+	change_mode (-1);
 }
 
 void update_mode_leds () {
 #ifdef ENABLE_MODE_LED_RGB
-  const byte *colors = mode_led_colors[current_mode];
-  byte c;
+	const byte *colors = mode_led_colors[current_mode];
+	byte c;
 
 #ifdef MODE_LED_R_PIN
-  c = colors[0];
+	c = colors[0];
 #ifdef MODE_LED_COMMON_ANODE
-  c = 255 - c;
+	c = 255 - c;
 #endif
-  analogWrite (MODE_LED_R_PIN, c);
+	analogWrite (MODE_LED_R_PIN, c);
 #endif
 
 #ifdef MODE_LED_G_PIN
-  c = colors[1];
+	c = colors[1];
 #ifdef MODE_LED_COMMON_ANODE
-  c = 255 - c;
+	c = 255 - c;
 #endif
-  analogWrite (MODE_LED_G_PIN, c);
+	analogWrite (MODE_LED_G_PIN, c);
 #endif
 
 #ifdef MODE_LED_B_PIN
-  c = colors[2];
+	c = colors[2];
 #ifdef MODE_LED_COMMON_ANODE
-  c = 255 - c;
+	c = 255 - c;
 #endif
-  analogWrite (MODE_LED_B_PIN, c);
+	analogWrite (MODE_LED_B_PIN, c);
 #endif
 
 #endif  // ENABLE_MODE_LED_RGB
 
 #ifdef MODE_LED_SINGLE_PIN
-  // WARNING: This loop must be reasonably shorter than LONGPRESS_LEN in the worst case!
-  for (byte i = 0; i < current_mode + 1; ++i) {
-    digitalWrite (MODE_LED_SINGLE_PIN, LOW);
-    delay (40);
-    digitalWrite (MODE_LED_SINGLE_PIN, HIGH);
-    delay (80);
-  }
+	// WARNING: This loop must be reasonably shorter than LONGPRESS_LEN in the worst case!
+	for (byte i = 0; i < current_mode + 1; ++i) {
+		digitalWrite (MODE_LED_SINGLE_PIN, LOW);
+		delay (40);
+		digitalWrite (MODE_LED_SINGLE_PIN, HIGH);
+		delay (80);
+	}
 #endif
 }
 
 void set_mode (VideoMode m) {
-  switch (m) {
-    default:
-    case EUR:
-      digitalWrite (VIDEOMODE_PIN, LOW);    // PAL 50Hz
-      digitalWrite (LANGUAGE_PIN, HIGH);    // ENG
-      break;
-    case USA:
-      digitalWrite (VIDEOMODE_PIN, HIGH);   // NTSC 60Hz
-      digitalWrite (LANGUAGE_PIN, HIGH);    // ENG
-      break;
-    case JAP:
-      digitalWrite (VIDEOMODE_PIN, HIGH);   // NTSC 60Hz
-      digitalWrite (LANGUAGE_PIN, LOW);     // JAP
-      break;
-  }
+	switch (m) {
+		default:
+		case EUR:
+			digitalWrite (VIDEOMODE_PIN, LOW);    // PAL 50Hz
+			digitalWrite (LANGUAGE_PIN, HIGH);    // ENG
+			break;
+		case USA:
+			digitalWrite (VIDEOMODE_PIN, HIGH);   // NTSC 60Hz
+			digitalWrite (LANGUAGE_PIN, HIGH);    // ENG
+			break;
+		case JAP:
+			digitalWrite (VIDEOMODE_PIN, HIGH);   // NTSC 60Hz
+			digitalWrite (LANGUAGE_PIN, LOW);     // JAP
+			break;
+	}
 
-  current_mode = m;
-  update_mode_leds ();
+	current_mode = m;
+	update_mode_leds ();
 
-  mode_last_changed_time = millis ();
+	mode_last_changed_time = millis ();
 }
 
 inline void handle_reset_button () {
-  static byte debounce_level = LOW;
-  static bool reset_pressed_before = false;
-  static long last_int = 0, reset_press_start = 0;
-  static unsigned int hold_cycles = 0;
+	static byte debounce_level = LOW;
+	static bool reset_pressed_before = false;
+	static long last_int = 0, reset_press_start = 0;
+	static unsigned int hold_cycles = 0;
 
-  byte reset_level = digitalRead (RESET_IN_PIN);
-  if (reset_level != debounce_level) {
-    // Reset debouncing timer
-    last_int = millis ();
-    debounce_level = reset_level;
-  } else if (millis () - last_int > DEBOUNCE_MS) {
-    // OK, button is stable, see if it has changed
-    if (reset_level != reset_inactive_level && !reset_pressed_before) {
-      // Button just pressed
-      reset_press_start = millis ();
-      hold_cycles = 0;
-    } else if (reset_level == reset_inactive_level && reset_pressed_before) {
-      // Button released
-      if (hold_cycles == 0) {
-        debugln (F("Reset button pushed for a short time"));
-        reset_console ();
-      }
-    } else {
-      // Button has not just been pressed/released
-      if (reset_level != reset_inactive_level && millis () % reset_press_start >= LONGPRESS_LEN * (hold_cycles + 1)) {
-        // Reset has been held for a while
-        debugln (F("Reset button hold"));
-        ++hold_cycles;
-        next_mode ();
-      }
-    }
+	byte reset_level = digitalRead (RESET_IN_PIN);
+	if (reset_level != debounce_level) {
+		// Reset debouncing timer
+		last_int = millis ();
+		debounce_level = reset_level;
+	} else if (millis () - last_int > DEBOUNCE_MS) {
+		// OK, button is stable, see if it has changed
+		if (reset_level != reset_inactive_level && !reset_pressed_before) {
+			// Button just pressed
+			reset_press_start = millis ();
+			hold_cycles = 0;
+		} else if (reset_level == reset_inactive_level && reset_pressed_before) {
+			// Button released
+			if (hold_cycles == 0) {
+				debugln (F("Reset button pushed for a short time"));
+				reset_console ();
+			}
+		} else {
+			// Button has not just been pressed/released
+			if (reset_level != reset_inactive_level && millis () % reset_press_start >= LONGPRESS_LEN * (hold_cycles + 1)) {
+				// Reset has been held for a while
+				debugln (F("Reset button hold"));
+				++hold_cycles;
+				next_mode ();
+			}
+		}
 
-    reset_pressed_before = (reset_level != reset_inactive_level);
-  }
+		reset_pressed_before = (reset_level != reset_inactive_level);
+	}
 }
 
 void reset_console () {
-  debugln (F("Resetting console"));
+	debugln (F("Resetting console"));
 
-  digitalWrite (RESET_OUT_PIN, !reset_inactive_level);
-  delay (RESET_LEN);
-  digitalWrite (RESET_OUT_PIN, reset_inactive_level);
+	digitalWrite (RESET_OUT_PIN, !reset_inactive_level);
+	delay (RESET_LEN);
+	digitalWrite (RESET_OUT_PIN, reset_inactive_level);
 }
 
 void setup () {
-  dstart (57600);
-  debugln (F("Starting up..."));
+	dstart (57600);
+	debugln (F("Starting up..."));
 
 /* Rant: As per D4s's installation schematics out there (which we use too), it
  * seems that on consoles with an active low reset signal, the Reset In input
@@ -451,95 +451,95 @@ void setup () {
  * line level.
  */
 #ifndef FORCE_RESET_ACTIVE_LEVEL
-  // Let things settle down and then sample the reset line
-  delay (100);
-  pinMode (RESET_IN_PIN, INPUT_PULLUP);
-  reset_inactive_level = digitalRead (RESET_IN_PIN);
-  debug (F("Reset line is "));
-  debug (reset_inactive_level ? F("HIGH") : F("LOW"));
-  debugln (" at startup");
+	// Let things settle down and then sample the reset line
+	delay (100);
+	pinMode (RESET_IN_PIN, INPUT_PULLUP);
+	reset_inactive_level = digitalRead (RESET_IN_PIN);
+	debug (F("Reset line is "));
+	debug (reset_inactive_level ? F("HIGH") : F("LOW"));
+	debugln (" at startup");
 #else
-  reset_inactive_level = !FORCE_RESET_ACTIVE_LEVEL;
-  debug (F("Reset line is forced to active-"));
-  debugln (FORCE_RESET_ACTIVE_LEVEL ? F("HIGH") : F("LOW"));
+	reset_inactive_level = !FORCE_RESET_ACTIVE_LEVEL;
+	debug (F("Reset line is forced to active-"));
+	debugln (FORCE_RESET_ACTIVE_LEVEL ? F("HIGH") : F("LOW"));
 #endif
 
-  if (reset_inactive_level == LOW) {
-    // No need for pull-up
-    pinMode (RESET_IN_PIN, INPUT);
+	if (reset_inactive_level == LOW) {
+		// No need for pull-up
+		pinMode (RESET_IN_PIN, INPUT);
 #ifdef FORCE_RESET_ACTIVE_LEVEL   // If this is not defined pull-up was already enabled above
-  } else {
-    pinMode (RESET_IN_PIN, INPUT_PULLUP);
+	} else {
+		pinMode (RESET_IN_PIN, INPUT_PULLUP);
 #endif
-  }
+	}
 
-  // Enable reset
-  pinMode (RESET_OUT_PIN, OUTPUT);
-  digitalWrite (RESET_OUT_PIN, !reset_inactive_level);
+	// Enable reset
+	pinMode (RESET_OUT_PIN, OUTPUT);
+	digitalWrite (RESET_OUT_PIN, !reset_inactive_level);
 
-  // Setup leds
+	// Setup leds
 #ifdef MODE_LED_R_PIN
-  pinMode (MODE_LED_R_PIN, OUTPUT);
+	pinMode (MODE_LED_R_PIN, OUTPUT);
 #endif
 
 #ifdef MODE_LED_G_PIN
-  pinMode (MODE_LED_G_PIN, OUTPUT);
+	pinMode (MODE_LED_G_PIN, OUTPUT);
 #endif
 
 #ifdef MODE_LED_B_PIN
-  pinMode (MODE_LED_B_PIN, OUTPUT);
+	pinMode (MODE_LED_B_PIN, OUTPUT);
 #endif
 
 #ifdef MODE_LED_SINGLE_PIN
-  pinMode (MODE_LED_SINGLE_PIN, OUTPUT);
+	pinMode (MODE_LED_SINGLE_PIN, OUTPUT);
 #endif
 
 #ifdef PAD_LED_PIN
-  pinMode (PAD_LED_PIN, OUTPUT);
+	pinMode (PAD_LED_PIN, OUTPUT);
 #endif
 
-  // Init video mode
-  pinMode (VIDEOMODE_PIN, OUTPUT);
-  pinMode (LANGUAGE_PIN, OUTPUT);
-  current_mode = EUR;
+	// Init video mode
+	pinMode (VIDEOMODE_PIN, OUTPUT);
+	pinMode (LANGUAGE_PIN, OUTPUT);
+	current_mode = EUR;
 #ifdef MODE_ROM_OFFSET
-  byte tmp = EEPROM.read (MODE_ROM_OFFSET);
-  debug (F("Loaded video mode from EEPROM: "));
-  debugln (tmp);
-  if (tmp < MODES_NO) {
-    // Palette EEPROM value is good
-    current_mode = static_cast<VideoMode> (tmp);
-  }
+	byte tmp = EEPROM.read (MODE_ROM_OFFSET);
+	debug (F("Loaded video mode from EEPROM: "));
+	debugln (tmp);
+	if (tmp < MODES_NO) {
+		// Palette EEPROM value is good
+		current_mode = static_cast<VideoMode> (tmp);
+	}
 #endif
-  set_mode (current_mode);
-  mode_last_changed_time = 0;   // No need to save what we just loaded
+	set_mode (current_mode);
+	mode_last_changed_time = 0;   // No need to save what we just loaded
 
-  // Prepare to read pad
-  setup_pad ();
+	// Prepare to read pad
+	setup_pad ();
 
-  // Finally release the reset line
-  digitalWrite (RESET_OUT_PIN, reset_inactive_level);
+	// Finally release the reset line
+	digitalWrite (RESET_OUT_PIN, reset_inactive_level);
 }
 
 inline void setup_pad () {
-  // Set port directions: All button lines are INPUTs
-  pinMode (0, INPUT);
-  pinMode (2, INPUT);
-  pinMode (3, INPUT);
-  pinMode (4, INPUT);
-  pinMode (5, INPUT);
-  pinMode (6, INPUT);
-  pinMode (7, INPUT);
+	// Set port directions: All button lines are INPUTs
+	pinMode (0, INPUT);
+	pinMode (2, INPUT);
+	pinMode (3, INPUT);
+	pinMode (4, INPUT);
+	pinMode (5, INPUT);
+	pinMode (6, INPUT);
+	pinMode (7, INPUT);
 
-  // The SIGNALLING line is an output
-  pinMode (12, OUTPUT);
+	// The SIGNALLING line is an output
+	pinMode (12, OUTPUT);
 
-  /* Enable interrupts: we can't use attachInterrupt() here, since our ISR is
-   * going to be bare
-   */
-  EICRA |= (1 << ISC00);    // Trigger interrupt on CHANGE
-  EIMSK |= (1 << INT0);     // Enable interrupt 0 (i.e.: on pin 2)
-  interrupts ();            // Enable all interrupts, probably redundant
+	/* Enable interrupts: we can't use attachInterrupt() here, since our ISR is
+	 * going to be bare
+	 */
+	EICRA |= (1 << ISC00);    // Trigger interrupt on CHANGE
+	EIMSK |= (1 << INT0);     // Enable interrupt 0 (i.e.: on pin 2)
+	interrupts ();            // Enable all interrupts, probably redundant
 }
 
 /******************************************************************************/
@@ -550,116 +550,116 @@ inline void setup_pad () {
  * sake. The bit-button mapping is defined in the PadButton enum above.
  */
 word read_pad () {
-  // Invert all bits, since we want to use 1 for pressed
-  byte b1 = ~g_buttons_1;     // Select HIGH......: UDLRBxxC
-  byte b2 = ~g_buttons_2;     // Select LOW.......: UDxxAxxS
-  byte b3 = ~g_buttons_3;     // Select PULSE-3...: ZYXMxxxx
+	// Invert all bits, since we want to use 1 for pressed
+	byte b1 = ~g_buttons_1;     // Select HIGH......: UDLRBxxC
+	byte b2 = ~g_buttons_2;     // Select LOW.......: UDxxAxxS
+	byte b3 = ~g_buttons_3;     // Select PULSE-3...: ZYXMxxxx
 
-  /* Compose all bytes into a single word, respecting the order in PadButton.
-   * Note that we take UP and DOWN from b2 because sometimes b1 will contain
-   * spurious data from b3, i.e.: Keeping X pressed reports LEFT, Y reports
-   * DOWN, etc... This way we restrict the problem to X and MODE.
-   *
-   * It would be great to eliminate the problem completely, but we still haven't
-   * found a way :(.
-   */
-  word buttons = (b1 & 0x38) | ((b1 & 0x01) << 2)
-               | (b2 & 0xC0) | ((b2 & 0x08) >> 2) | (b2 & 0x01)
-               | (((word) (b3 & 0xF0)) << 4)
-               ;
+	/* Compose all bytes into a single word, respecting the order in PadButton.
+	 * Note that we take UP and DOWN from b2 because sometimes b1 will contain
+	 * spurious data from b3, i.e.: Keeping X pressed reports LEFT, Y reports
+	 * DOWN, etc... This way we restrict the problem to X and MODE.
+	 *
+	 * It would be great to eliminate the problem completely, but we still haven't
+	 * found a way :(.
+	 */
+	word buttons = (b1 & 0x38) | ((b1 & 0x01) << 2)
+							 | (b2 & 0xC0) | ((b2 & 0x08) >> 2) | (b2 & 0x01)
+							 | (((word) (b3 & 0xF0)) << 4)
+							 ;
 
-  return buttons;
+	return buttons;
 }
 
 
 #define IGNORE_COMBO_MS LONGPRESS_LEN
 
 inline void handle_pad () {
-  static long last_combo_time = 0;
+	static long last_combo_time = 0;
 
-  word pad_status = read_pad ();
+	word pad_status = read_pad ();
 
 #ifdef PAD_LED_PIN
-  digitalWrite (PAD_LED_PIN, pad_status != 0);
+	digitalWrite (PAD_LED_PIN, pad_status != 0);
 #endif
 
 #ifdef DEBUG_PAD
-  static word last_pad_status = 0;
+	static word last_pad_status = 0;
 
-  if (pad_status != last_pad_status) {
-    debug (F("Pressed: "));
-    if (pad_status & MD_BTN_UP)
-      debug (F("Up "));
-    if (pad_status & MD_BTN_DOWN)
-      debug (F("Down "));
-    if (pad_status & MD_BTN_LEFT)
-      debug (F("Left "));
-    if (pad_status & MD_BTN_RIGHT)
-      debug (F("Right "));
-    if (pad_status & MD_BTN_A)
-      debug (F("A "));
-    if (pad_status & MD_BTN_B)
-      debug (F("B "));
-    if (pad_status & MD_BTN_C)
-      debug (F("C "));
-    if (pad_status & MD_BTN_X)
-      debug (F("X "));
-    if (pad_status & MD_BTN_Y)
-      debug (F("Y "));
-    if (pad_status & MD_BTN_Z)
-      debug (F("Z "));
-    if (pad_status & MD_BTN_MODE)
-      debug (F("Mode "));
-    if (pad_status & MD_BTN_START)
-      debug (F("Start "));
-    debugln ();
+	if (pad_status != last_pad_status) {
+		debug (F("Pressed: "));
+		if (pad_status & MD_BTN_UP)
+			debug (F("Up "));
+		if (pad_status & MD_BTN_DOWN)
+			debug (F("Down "));
+		if (pad_status & MD_BTN_LEFT)
+			debug (F("Left "));
+		if (pad_status & MD_BTN_RIGHT)
+			debug (F("Right "));
+		if (pad_status & MD_BTN_A)
+			debug (F("A "));
+		if (pad_status & MD_BTN_B)
+			debug (F("B "));
+		if (pad_status & MD_BTN_C)
+			debug (F("C "));
+		if (pad_status & MD_BTN_X)
+			debug (F("X "));
+		if (pad_status & MD_BTN_Y)
+			debug (F("Y "));
+		if (pad_status & MD_BTN_Z)
+			debug (F("Z "));
+		if (pad_status & MD_BTN_MODE)
+			debug (F("Mode "));
+		if (pad_status & MD_BTN_START)
+			debug (F("Start "));
+		debugln ();
 
-    last_pad_status = pad_status;
-  }
+		last_pad_status = pad_status;
+	}
 #endif
 
-  if ((pad_status & TRIGGER_COMBO) == TRIGGER_COMBO && millis () - last_combo_time > IGNORE_COMBO_MS) {
-    if ((pad_status & RESET_COMBO) == RESET_COMBO) {
-      debugln (F("Reset combo detected"));
-      reset_console ();
-      pad_status = 0;     // Avoid continuous reset (pad_status might keep the last value during reset!)
-      last_combo_time = millis ();
+	if ((pad_status & TRIGGER_COMBO) == TRIGGER_COMBO && millis () - last_combo_time > IGNORE_COMBO_MS) {
+		if ((pad_status & RESET_COMBO) == RESET_COMBO) {
+			debugln (F("Reset combo detected"));
+			reset_console ();
+			pad_status = 0;     // Avoid continuous reset (pad_status might keep the last value during reset!)
+			last_combo_time = millis ();
 #ifdef EUR_COMBO
-    } else if ((pad_status & EUR_COMBO) == EUR_COMBO) {
-      debugln (F("EUR mode combo detected"));
-      set_mode (EUR);
-      last_combo_time = millis ();
+		} else if ((pad_status & EUR_COMBO) == EUR_COMBO) {
+			debugln (F("EUR mode combo detected"));
+			set_mode (EUR);
+			last_combo_time = millis ();
 #endif
 #ifdef USA_COMBO
-    } else if ((pad_status & USA_COMBO) == USA_COMBO) {
-      debugln (F("USA mode combo detected"));
-      set_mode (USA);
-      last_combo_time = millis ();
+		} else if ((pad_status & USA_COMBO) == USA_COMBO) {
+			debugln (F("USA mode combo detected"));
+			set_mode (USA);
+			last_combo_time = millis ();
 #endif
 #ifdef JAP_COMBO
-    } else if ((pad_status & JAP_COMBO) == JAP_COMBO) {
-      debugln (F("JAP mode combo detected"));
-      set_mode (JAP);
-      last_combo_time = millis ();
+		} else if ((pad_status & JAP_COMBO) == JAP_COMBO) {
+			debugln (F("JAP mode combo detected"));
+			set_mode (JAP);
+			last_combo_time = millis ();
 #endif
 #ifdef NEXT_MODE_COMBO
-    } else if ((pad_status & NEXT_MODE_COMBO) == NEXT_MODE_COMBO) {
-      debugln (F("Next mode combo detected"));
-      next_mode ();
-      last_combo_time = millis ();
+		} else if ((pad_status & NEXT_MODE_COMBO) == NEXT_MODE_COMBO) {
+			debugln (F("Next mode combo detected"));
+			next_mode ();
+			last_combo_time = millis ();
 #endif
 #ifdef PREV_MODE_COMBO
-    } else if ((pad_status & PREV_MODE_COMBO) == PREV_MODE_COMBO) {
-      debugln (F("Previous mode combo detected"));
-      prev_mode ();
-      last_combo_time = millis ();
+		} else if ((pad_status & PREV_MODE_COMBO) == PREV_MODE_COMBO) {
+			debugln (F("Previous mode combo detected"));
+			prev_mode ();
+			last_combo_time = millis ();
 #endif
-    }
-  }
+		}
+	}
 }
 
 void loop () {
-  handle_reset_button ();
-  handle_pad ();
-  save_mode ();
+	handle_reset_button ();
+	handle_pad ();
+	save_mode ();
 }
