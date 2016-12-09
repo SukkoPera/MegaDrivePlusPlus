@@ -145,9 +145,19 @@ enum __attribute__ ((__packed__)) PadButton {
  * ADVANCED SETTINGS
  ******************************************************************************/
 
-/* Offset in the EEPROM at which the current mode should be saved. Undefine to
- * disable mode saving.
+/* Some games do a region check at boot, that can be bypassed by booting the
+ * console in its initial video mode, and switching to the desired mode later.
+ * Define this to the desired switch delay, in seconds. Undefine to set the
+ * desired mode immediately at boot.
  */
+//~ #define MODE_SWITCH_DELAY 10
+
+/* Native console mode. This is used as the initial mode if delayed switching is
+ * enabled.
+ */
+#define NATIVE_MODE EUR
+
+// Offset in the EEPROM at which the current mode should be saved
 #define MODE_ROM_OFFSET 42
 
 // Time to wait after mode change before saving the new mode (milliseconds)
@@ -183,7 +193,7 @@ enum __attribute__ ((__packed__)) PadButton {
  * Basically, the single led is blinked 1-3 times according to which mode is set
  * (1 is EUR, see enum VideoMode below).
  */
-//#define MODE_LED_SINGLE_PIN A1
+#define MODE_LED_SINGLE_PIN A1
 
 /* Presses of the reset button longer than this amount of milliseconds will
  * switch to the next mode, shorter presses will reset the console.
@@ -220,9 +230,7 @@ enum __attribute__ ((__packed__)) PadButton {
 	#define debugln(...)
 #endif
 
-#ifdef MODE_ROM_OFFSET
-	#include <EEPROM.h>
-#endif
+#include <EEPROM.h>
 
 enum __attribute__ ((__packed__)) VideoMode {
 	EUR,
@@ -243,8 +251,10 @@ const byte mode_led_colors[][MODES_NO] = {
 #endif
 
 // Video mode
-VideoMode current_mode;
-unsigned long mode_last_changed_time;
+VideoMode current_mode = NATIVE_MODE;
+unsigned long mode_last_changed_time = 0;
+boolean initial_mode_set = false;
+unsigned long last_reset_time = 0;
 
 // Reset level when NOT ACTIVE
 byte reset_inactive_level;
@@ -261,9 +271,28 @@ volatile byte g_buttons_1 = 0xFF;
 volatile byte g_buttons_2 = 0xFF;
 volatile byte g_buttons_3 = 0xFF;
 
+void rgb_led_off () {
+#ifdef ENABLE_MODE_LED_RGB
+	byte c = 0;
+
+#ifdef RGB_LED_COMMON_ANODE
+	c = 255;
+#endif
+
+#ifdef MODE_LED_R_PIN
+	analogWrite (MODE_LED_R_PIN, c);
+#endif
+
+#ifdef MODE_LED_G_PIN
+	analogWrite (MODE_LED_G_PIN, c);
+#endif
+
+#ifdef MODE_LED_B_PIN
+	analogWrite (MODE_LED_B_PIN, c);
+#endif
+}
 
 inline void save_mode () {
-#ifdef MODE_ROM_OFFSET
 	if (mode_last_changed_time > 0 && millis () - mode_last_changed_time >= MODE_SAVE_DELAY) {
 		debug (F("Saving video mode to EEPROM: "));
 		debugln (current_mode);
@@ -277,30 +306,13 @@ inline void save_mode () {
 		mode_last_changed_time = 0;    // Don't save again
 
 		// Blink led to tell the user that mode was saved
-#ifdef ENABLE_MODE_LED_RGB
-		byte c = 0;
-
-#ifdef RGB_LED_COMMON_ANODE
-		c = 255 - c;
-#endif
-
-#ifdef MODE_LED_R_PIN
-		analogWrite (MODE_LED_R_PIN, c);
-#endif
-
-#ifdef MODE_LED_G_PIN
-		analogWrite (MODE_LED_G_PIN, c);
-#endif
-
-#ifdef MODE_LED_B_PIN
-		analogWrite (MODE_LED_B_PIN, c);
-#endif
+		rgb_led_off ();
 
 		// Keep off for a bit
 		delay (200);
 
 		// Turn leds back on
-		update_mode_leds ();
+		rgb_led_update ();
 #endif  // ENABLE_MODE_LED_RGB
 
 #ifdef MODE_LED_SINGLE_PIN
@@ -310,13 +322,12 @@ inline void save_mode () {
 		digitalWrite (MODE_LED_SINGLE_PIN, HIGH);
 #endif
 	}
-#endif  // MODE_ROM_OFFSET
 }
 
 inline void change_mode (int increment) {
 	// This also loops in [0, MODES_NO) backwards
 	VideoMode new_mode = static_cast<VideoMode> ((current_mode + increment + MODES_NO) % MODES_NO);
-	set_mode (new_mode);
+	set_mode (new_mode, true);
 }
 
 inline void next_mode () {
@@ -327,7 +338,7 @@ inline void prev_mode () {
 	change_mode (-1);
 }
 
-void update_mode_leds () {
+void rgb_led_update () {
 #ifdef ENABLE_MODE_LED_RGB
 	const byte *colors = mode_led_colors[current_mode];
 	byte c;
@@ -357,9 +368,13 @@ void update_mode_leds () {
 #endif
 
 #endif  // ENABLE_MODE_LED_RGB
+}
 
+void flash_single_led () {
 #ifdef MODE_LED_SINGLE_PIN
-	// WARNING: This loop must be reasonably shorter than LONGPRESS_LEN in the worst case!
+	/* WARNING: This loop must be reasonably shorter than LONGPRESS_LEN in
+	 * the worst case!
+	 */
 	for (byte i = 0; i < current_mode + 1; ++i) {
 		digitalWrite (MODE_LED_SINGLE_PIN, LOW);
 		delay (40);
@@ -369,7 +384,7 @@ void update_mode_leds () {
 #endif
 }
 
-void set_mode (VideoMode m) {
+void set_mode (VideoMode m, boolean save) {
 	switch (m) {
 		default:
 		case EUR:
@@ -387,9 +402,12 @@ void set_mode (VideoMode m) {
 	}
 
 	current_mode = m;
-	update_mode_leds ();
+	rgb_led_update ();
+	flash_single_led ();
 
-	mode_last_changed_time = millis ();
+	if (save) {
+		mode_last_changed_time = millis ();
+	}
 }
 
 inline void handle_reset_button () {
@@ -429,12 +447,57 @@ inline void handle_reset_button () {
 	}
 }
 
+void set_initial_mode () {
+#ifdef MODE_SWITCH_DELAY
+	if (!initial_mode_set && (millis () - last_reset_time) / 1000 >= MODE_SWITCH_DELAY) {
+		debugln (F("Mode Switch Delay is over, setting desired mode"));
+#endif
+		byte tmp = EEPROM.read (MODE_ROM_OFFSET);
+		debug (F("Loaded video mode from EEPROM: "));
+		debugln (tmp);
+		if (tmp < MODES_NO) {
+			// Palette EEPROM value is good
+			set_mode (static_cast<VideoMode> (tmp), false);		// Don't overwrite EEPROM
+		} else {
+			debugln (F("Video mode from EEPROM is invalid, using native mode"));
+			set_mode (NATIVE_MODE, false);	// Don't overwrite EEPROM
+		}
+
+		initial_mode_set = true;
+
+#ifdef MODE_SWITCH_DELAY
+	} else if (!initial_mode_set) {
+		// Blink led until MODE_SWITCH_DELAY is over
+		if ((millis () / 500) % 2 == 0) {
+			rgb_led_update ();
+
+#ifdef MODE_LED_SINGLE_PIN
+			digitalWrite (MODE_LED_SINGLE_PIN, HIGH);
+#endif
+		} else {
+			rgb_led_off ();
+
+#ifdef MODE_LED_SINGLE_PIN
+			digitalWrite (MODE_LED_SINGLE_PIN, LOW);
+#endif
+		}
+	}
+#endif
+}
+
+
 void reset_console () {
 	debugln (F("Resetting console"));
 
 	digitalWrite (RESET_OUT_PIN, !reset_inactive_level);
+#ifdef MODE_SWITCH_DELAY
+	set_mode (NATIVE_MODE, false);		// Don't overwrite EEPROM
+#endif
 	delay (RESET_LEN);
 	digitalWrite (RESET_OUT_PIN, reset_inactive_level);
+
+	last_reset_time = millis ();
+	initial_mode_set = false;
 }
 
 void setup () {
@@ -501,18 +564,14 @@ void setup () {
 	// Init video mode
 	pinMode (VIDEOMODE_PIN, OUTPUT);
 	pinMode (LANGUAGE_PIN, OUTPUT);
-	current_mode = EUR;
-#ifdef MODE_ROM_OFFSET
-	byte tmp = EEPROM.read (MODE_ROM_OFFSET);
-	debug (F("Loaded video mode from EEPROM: "));
-	debugln (tmp);
-	if (tmp < MODES_NO) {
-		// Palette EEPROM value is good
-		current_mode = static_cast<VideoMode> (tmp);
-	}
+#ifdef MODE_SWITCH_DELAY
+	// Start with native mode, desired mode will be set later on
+	debugln (F("Mode Switch Delay is active, booting in native mode"));
+	set_mode (NATIVE_MODE, false);		// Don't overwrite EEPROM
+#else
+	// No Mode Switch Delay requested, set initial mode straight away
+	set_initial_mode ();
 #endif
-	set_mode (current_mode);
-	mode_last_changed_time = 0;   // No need to save what we just loaded
 
 	// Prepare to read pad
 	setup_pad ();
@@ -627,19 +686,19 @@ inline void handle_pad () {
 #ifdef EUR_COMBO
 		} else if ((pad_status & EUR_COMBO) == EUR_COMBO) {
 			debugln (F("EUR mode combo detected"));
-			set_mode (EUR);
+			set_mode (EUR, true);
 			last_combo_time = millis ();
 #endif
 #ifdef USA_COMBO
 		} else if ((pad_status & USA_COMBO) == USA_COMBO) {
 			debugln (F("USA mode combo detected"));
-			set_mode (USA);
+			set_mode (USA, true);
 			last_combo_time = millis ();
 #endif
 #ifdef JAP_COMBO
 		} else if ((pad_status & JAP_COMBO) == JAP_COMBO) {
 			debugln (F("JAP mode combo detected"));
-			set_mode (JAP);
+			set_mode (JAP, true);
 			last_combo_time = millis ();
 #endif
 #ifdef NEXT_MODE_COMBO
@@ -659,7 +718,11 @@ inline void handle_pad () {
 }
 
 void loop () {
+#ifdef MODE_SWITCH_DELAY
+	set_initial_mode ();
+#endif
 	handle_reset_button ();
 	handle_pad ();
 	save_mode ();
 }
+
