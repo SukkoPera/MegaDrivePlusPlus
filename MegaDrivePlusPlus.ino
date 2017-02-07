@@ -27,20 +27,20 @@
 /* Bare ATmega328 Wiring diagram:
  *
  *                    ,-----_-----.
- *                    |1     A5 28| JP1/2 (Language)
- *     Pad Port Pin 9 |2   0 A4 27| JP3/4 (Video Mode)
- *                    |3   1 A3 26| Reset In
- *     Pad Port Pin 7 |4   2 A2 25| Reset Out
- *     Pad Port Pin 6 |5   3 A1 24|
- *     Pad Port Pin 4 |6   4 A0 23|
+ *                    |1     A5 28| [LCD SCL]
+ *     Pad Port Pin 9 |2   0 A4 27| [LCD SDA]
+ *                    |3   1 A3 26| JP1/2 (Language)
+ *     Pad Port Pin 7 |4   2 A2 25| JP3/4 (Video Mode)
+ *     Pad Port Pin 6 |5   3 A1 24| Reset In
+ *     Pad Port Pin 4 |6   4 A0 23| Reset Out
  *                +5V |7        22| GND
  *                GND |8        21| +5V
  *                    |9        20| +5V
  *                    |10    13 19| (Built-in LED)
  *     Pad Port Pin 3 |11  5 12 18|
- *     Pad Port Pin 2 |12  6 11 17| LED Blue
- *     Pad Port Pin 1 |13  7 10 16| LED Green
- *                    |14  8  9 15| LED Red
+ *     Pad Port Pin 2 |12  6 11 17| [LED Blue]
+ *     Pad Port Pin 1 |13  7 10 16| [LED Green]
+ *   [Single Pin Led] |14  8  9 15| [LED Red]
  *                    `-----------'
  *
  *
@@ -50,14 +50,14 @@
  *                    +------------| USB |------------+
  *                    |            +-----+            |
  *     (Built-in LED) | [ ]D13/SCK        MISO/D12[ ] |
- *                    | [ ]3.3V           MOSI/D11[X]~| LED Blue
- *                    | [ ]V.ref     ___    SS/D10[X]~| LED Green
- *                    | [ ]A0       / N \       D9[X]~| LED Red
- *                    | [ ]A1      /  A  \      D8[ ] |
- *          Reset Out | [X]A2      \  N  /      D7[X] | Pad Port Pin 1
- *           Reset In | [X]A3       \_0_/       D6[X]~| Pad Port Pin 2
- * JP3/4 (Video Mode) | [X]A4/SDA               D5[X]~| Pad Port Pin 3
- *   JP1/2 (Language) | [X]A5/SCL               D4[X] | Pad Port Pin 4
+ *                    | [ ]3.3V           MOSI/D11[X]~| [LED Blue]
+ *                    | [ ]V.ref     ___    SS/D10[X]~| [LED Green]
+ *          Reset Out | [X]A0       / N \       D9[X]~| [LED Red]
+ *           Reset In | [X]A1      /  A  \      D8[ ] | [Single Pin Led]
+ * JP3/4 (Video Mode) | [X]A2      \  N  /      D7[X] | Pad Port Pin 1
+ *   JP1/2 (Language) | [X]A3       \_0_/       D6[X]~| Pad Port Pin 2
+ *          [LCD SDA] | [X]A4/SDA               D5[X]~| Pad Port Pin 3
+ *          [LCD SCL] | [X]A5/SCL               D4[X] | Pad Port Pin 4
  *                    | [ ]A6              INT1/D3[X]~| Pad Port Pin 6
  *                    | [ ]A7              INT0/D2[X] | Pad Port Pin 7
  *                +5V | [X]5V                  GND[X] | GND
@@ -68,6 +68,9 @@
  *                    |          MISO SCK RST         |
  *                    | NANO-V3                       |
  *                    +-------------------------------+
+ *
+ * Connections of pins in square brackets are optional. All the others are
+ * mandatory.
  *
  * Wiring considerations:
  * - We read the pad port status through an ISR triggered by a level change on
@@ -96,7 +99,7 @@
 #define MODE_LED_B_PIN 11         // PWM
 #define PAD_LED_PIN LED_BUILTIN
 //#define ENABLE_SERIAL_DEBUG
-#define ENABLE_LCD
+//#define ENABLE_LCD
 
 
 /*******************************************************************************
@@ -585,7 +588,7 @@ inline void setup_pad () {
 	pinMode (7, INPUT);
 
 	// The SIGNALLING line is an output
-	pinMode (12, OUTPUT);
+	//~ pinMode (12, OUTPUT);
 
 	/* Enable interrupts: we can't use attachInterrupt() here, since our ISR is
 	 * going to be bare
