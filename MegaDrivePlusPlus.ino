@@ -569,10 +569,12 @@ void setup () {
 	pinMode (PAD_LED_PIN, OUTPUT);
 #endif
 
-	/* Do this again so that leds get set properly: when we called
-	 * set_mode() above the led pins had not been set in output mode yet.
+	/* Do this again so that leds and LCD get set properly: when we did it
+	 * above the led pins had not been set in output mode and the LCD had
+	 * not been initialized yet.
 	 */
-	update_mode_leds ();
+	set_mode (current_mode);
+	mode_last_changed_time = 0;   // No need to save what we just loaded
 
 	// Prepare to read pad
 	setup_pad ();
