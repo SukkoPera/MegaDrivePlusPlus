@@ -525,7 +525,7 @@ void setup () {
 	reset_inactive_level = digitalRead (RESET_IN_PIN);
 	debug (F("Reset line is "));
 	debug (reset_inactive_level ? F("HIGH") : F("LOW"));
-	debugln (" at startup");
+	debugln (F(" at startup"));
 
 	lcd_print_at (0, 0, F("R:"));
 	lcd_print (reset_inactive_level ? F("HIGH") : F("LOW"));
