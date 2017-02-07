@@ -477,6 +477,27 @@ void reset_console () {
 }
 
 void setup () {
+	/* Init video mode: We do this as soon as possible since the MegaDrive's
+	 * reset line seems to be edge-triggered, so we cannot hold the console
+	 * in the reset state while we are setting up stuff. We'll take care of
+	 * the rest later.
+	 */
+	pinMode (VIDEOMODE_PIN, OUTPUT);
+	pinMode (LANGUAGE_PIN, OUTPUT);
+	current_mode = EUR;
+#ifdef MODE_ROM_OFFSET
+	byte tmp = EEPROM.read (MODE_ROM_OFFSET);
+	debug (F("Loaded video mode from EEPROM: "));
+	debugln (tmp);
+	if (tmp < MODES_NO) {
+		// Palette EEPROM value is good
+		current_mode = static_cast<VideoMode> (tmp);
+	}
+#endif
+	set_mode (current_mode);
+	mode_last_changed_time = 0;   // No need to save what we just loaded
+
+	// Pheeew, that was quick! Let's go on with the rest!
 	dstart (57600);
 	debugln (F("Starting up..."));
 
@@ -548,28 +569,17 @@ void setup () {
 	pinMode (PAD_LED_PIN, OUTPUT);
 #endif
 
-	// Init video mode
-	pinMode (VIDEOMODE_PIN, OUTPUT);
-	pinMode (LANGUAGE_PIN, OUTPUT);
-	current_mode = EUR;
-#ifdef MODE_ROM_OFFSET
-	byte tmp = EEPROM.read (MODE_ROM_OFFSET);
-	debug (F("Loaded video mode from EEPROM: "));
-	debugln (tmp);
-	if (tmp < MODES_NO) {
-		// Palette EEPROM value is good
-		current_mode = static_cast<VideoMode> (tmp);
-	}
-#endif
-	set_mode (current_mode);
-	mode_last_changed_time = 0;   // No need to save what we just loaded
+	/* Do this again so that leds get set properly: when we called
+	 * set_mode() above the led pins had not been set in output mode yet.
+	 */
+	update_mode_leds ();
 
 	// Prepare to read pad
 	setup_pad ();
 
 	// Reset console so that it picks up the new mode/lang
-	pinMode (RESET_OUT_PIN, OUTPUT);
-	reset_console ();
+	//~ pinMode (RESET_OUT_PIN, OUTPUT);
+	//~ reset_console ();
 
 	// We are ready to roll!
 	lcd_print_at (1, 0, F("     Ready!     "));
