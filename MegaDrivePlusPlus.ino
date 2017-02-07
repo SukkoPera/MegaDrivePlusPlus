@@ -87,15 +87,16 @@
  *   Arduino boards.
  */
 
-#define RESET_IN_PIN A3
-#define RESET_OUT_PIN A2
-#define VIDEOMODE_PIN A4
-#define LANGUAGE_PIN A5
+#define RESET_IN_PIN A1
+#define RESET_OUT_PIN A0
+#define VIDEOMODE_PIN A2
+#define LANGUAGE_PIN A3
 #define MODE_LED_R_PIN 9          // PWM
 #define MODE_LED_G_PIN 10         // PWM
 #define MODE_LED_B_PIN 11         // PWM
 #define PAD_LED_PIN LED_BUILTIN
-#define ENABLE_SERIAL_DEBUG
+//#define ENABLE_SERIAL_DEBUG
+#define ENABLE_LCD
 
 
 /*******************************************************************************
@@ -183,7 +184,7 @@ enum __attribute__ ((__packed__)) PadButton {
  * Basically, the single led is blinked 1-3 times according to which mode is set
  * (1 is EUR, see enum VideoMode below).
  */
-//#define MODE_LED_SINGLE_PIN A1
+#define MODE_LED_SINGLE_PIN 8
 
 /* Presses of the reset button longer than this amount of milliseconds will
  * switch to the next mode, shorter presses will reset the console.
@@ -205,6 +206,32 @@ enum __attribute__ ((__packed__)) PadButton {
  * END OF SETTINGS
  ******************************************************************************/
 
+#ifdef ENABLE_LCD
+	#include <LiquidCrystal_I2C.h>
+
+	/* Init LCD - This can vary depending on your display, adapter, etc...
+	 * This uses F. Malpartida's New LiquidCrystal library because I like
+	 * it and it works fine with my display. Experiment with the library
+	 * examples until you find a working configuration for your display and
+	 * then port it here.
+	 *
+	 * See: https://bitbucket.org/fmalpartida/new-liquidcrystal/wiki/Home
+	 *
+	 * This page also helped me with many displays:
+	 * https://arduino-info.wikispaces.com/LCD-Blue-I2C
+	 */
+	LiquidCrystal_I2C lcd (0x3f, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
+
+	#define lcd_start() do {lcd.begin (16, 4); lcd.clear (); lcd.home ();} while (0)
+	#define lcd_print(...) lcd.print (__VA_ARGS__)
+	#define lcd_print_at(row, col, ...) do {lcd.setCursor (col, row); lcd.print (__VA_ARGS__);} while (0)
+	#define lcd_clear() do {lcd.clear (); lcd.home ();} while (0)
+#else
+	#define lcd_start() do {} while (0)
+        #define lcd_print(...) do {} while (0)
+        #define lcd_print_at(row, col, ...) do {} while (0)
+	#define lcd_clear() do {} while (0)
+#endif
 
 #ifdef ENABLE_SERIAL_DEBUG
 	#include <SendOnlySoftwareSerial.h>
@@ -370,17 +397,22 @@ void update_mode_leds () {
 }
 
 void set_mode (VideoMode m) {
+	lcd_print_at (0, 11, F("M:"));
+
 	switch (m) {
 		default:
 		case EUR:
+			lcd_print (F("EUR"));
 			digitalWrite (VIDEOMODE_PIN, LOW);    // PAL 50Hz
 			digitalWrite (LANGUAGE_PIN, HIGH);    // ENG
 			break;
 		case USA:
+			lcd_print (F("USA"));
 			digitalWrite (VIDEOMODE_PIN, HIGH);   // NTSC 60Hz
 			digitalWrite (LANGUAGE_PIN, HIGH);    // ENG
 			break;
 		case JAP:
+			lcd_print (F("JAP"));
 			digitalWrite (VIDEOMODE_PIN, HIGH);   // NTSC 60Hz
 			digitalWrite (LANGUAGE_PIN, LOW);     // JAP
 			break;
@@ -430,16 +462,28 @@ inline void handle_reset_button () {
 }
 
 void reset_console () {
+	lcd_print_at (1, 0, F("  Resetting...  "));
+
 	debugln (F("Resetting console"));
 
 	digitalWrite (RESET_OUT_PIN, !reset_inactive_level);
 	delay (RESET_LEN);
 	digitalWrite (RESET_OUT_PIN, reset_inactive_level);
+
+	lcd_print_at (1, 0, F("                "));
 }
 
 void setup () {
 	dstart (57600);
 	debugln (F("Starting up..."));
+
+#ifdef ENABLE_LCD
+	lcd_start ();
+	lcd_print_at (0, 0, F("   Welcome to"));
+	lcd_print_at (1, 0, F("   MegaDrive++"));
+	delay (1000);
+	lcd.clear ();
+#endif
 
 /* Rant: As per D4s's installation schematics out there (which we use too), it
  * seems that on consoles with an active low reset signal, the Reset In input
@@ -458,10 +502,17 @@ void setup () {
 	debug (F("Reset line is "));
 	debug (reset_inactive_level ? F("HIGH") : F("LOW"));
 	debugln (" at startup");
+
+	lcd_print_at (0, 0, F("R:"));
+	lcd_print (reset_inactive_level ? F("HIGH") : F("LOW"));
 #else
 	reset_inactive_level = !FORCE_RESET_ACTIVE_LEVEL;
 	debug (F("Reset line is forced to active-"));
 	debugln (FORCE_RESET_ACTIVE_LEVEL ? F("HIGH") : F("LOW"));
+
+	lcd_print_at (0, 0, F("R-F:"));
+	lcd_print (FORCE_RESET_ACTIVE_LEVEL ? F("HIGH") : F("LOW"));
+
 #endif
 
 	if (reset_inactive_level == LOW) {
@@ -472,10 +523,6 @@ void setup () {
 		pinMode (RESET_IN_PIN, INPUT_PULLUP);
 #endif
 	}
-
-	// Enable reset
-	pinMode (RESET_OUT_PIN, OUTPUT);
-	digitalWrite (RESET_OUT_PIN, !reset_inactive_level);
 
 	// Setup leds
 #ifdef MODE_LED_R_PIN
@@ -517,8 +564,14 @@ void setup () {
 	// Prepare to read pad
 	setup_pad ();
 
-	// Finally release the reset line
-	digitalWrite (RESET_OUT_PIN, reset_inactive_level);
+	// Reset console so that it picks up the new mode/lang
+	pinMode (RESET_OUT_PIN, OUTPUT);
+	reset_console ();
+
+	// We are ready to roll!
+	lcd_print_at (1, 0, F("     Ready!     "));
+	delay (1000);
+	lcd_print_at (1, 0, F("                "));
 }
 
 inline void setup_pad () {
@@ -608,15 +661,64 @@ inline void handle_pad () {
 			debug (F("Y "));
 		if (pad_status & MD_BTN_Z)
 			debug (F("Z "));
-		if (pad_status & MD_BTN_MODE)
-			debug (F("Mode "));
 		if (pad_status & MD_BTN_START)
 			debug (F("Start "));
+		if (pad_status & MD_BTN_MODE)
+			debug (F("Mode "));
 		debugln ();
 
 		last_pad_status = pad_status;
 	}
 #endif
+
+	if (pad_status & MD_BTN_UP)
+		lcd_print_at (1, 0, 'U');
+	else
+		lcd_print_at (1, 0, ' ');
+	if (pad_status & MD_BTN_DOWN)
+		lcd_print_at (1, 1, 'D');
+	else
+		lcd_print_at (1, 1, ' ');
+	if (pad_status & MD_BTN_LEFT)
+		lcd_print_at (1, 2, 'L');
+	else
+		lcd_print_at (1, 2, ' ');
+	if (pad_status & MD_BTN_RIGHT)
+		lcd_print_at (1, 3, 'R');
+	else
+		lcd_print_at (1, 3, ' ');
+	if (pad_status & MD_BTN_A)
+		lcd_print_at (1, 5, 'A');
+	else
+		lcd_print_at (1, 5, ' ');
+	if (pad_status & MD_BTN_B)
+		lcd_print_at (1, 6, 'B');
+	else
+		lcd_print_at (1, 6, ' ');
+	if (pad_status & MD_BTN_C)
+		lcd_print_at (1, 7, 'C');
+	else
+		lcd_print_at (1, 7, ' ');
+	if (pad_status & MD_BTN_X)
+		lcd_print_at (1, 9, 'X');
+	else
+		lcd_print_at (1, 9, ' ');
+	if (pad_status & MD_BTN_Y)
+		lcd_print_at (1, 10, 'Y');
+	else
+		lcd_print_at (1, 10, ' ');
+	if (pad_status & MD_BTN_Z)
+		lcd_print_at (1, 11, 'Z');
+	else
+		lcd_print_at (1, 11, ' ');
+	if (pad_status & MD_BTN_START)
+		lcd_print_at (1, 13, 'S');
+	else
+		lcd_print_at (1, 13, ' ');
+	if (pad_status & MD_BTN_MODE)
+		lcd_print_at (1, 15, ' ');
+	else
+		lcd_print_at (1, 15, ' ');
 
 	if ((pad_status & TRIGGER_COMBO) == TRIGGER_COMBO && millis () - last_combo_time > IGNORE_COMBO_MS) {
 		if ((pad_status & RESET_COMBO) == RESET_COMBO) {
