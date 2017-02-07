@@ -457,7 +457,7 @@ void setup () {
 	reset_inactive_level = digitalRead (RESET_IN_PIN);
 	debug (F("Reset line is "));
 	debug (reset_inactive_level ? F("HIGH") : F("LOW"));
-	debugln (" at startup");
+	debugln (F(" at startup"));
 #else
 	reset_inactive_level = !FORCE_RESET_ACTIVE_LEVEL;
 	debug (F("Reset line is forced to active-"));
