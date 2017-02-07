@@ -580,7 +580,7 @@ void setup () {
 	setup_pad ();
 
 	// Reset console so that it picks up the new mode/lang
-	//~ pinMode (RESET_OUT_PIN, OUTPUT);
+	pinMode (RESET_OUT_PIN, OUTPUT);
 	//~ reset_console ();
 
 	// We are ready to roll!
