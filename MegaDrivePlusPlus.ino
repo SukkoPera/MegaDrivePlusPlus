@@ -108,6 +108,8 @@
 
 // DON'T TOUCH THIS! Just look at it for the button names you can use below!
 enum __attribute__ ((__packed__)) PadButton {
+	MD_PAD_6BTN =  1 << 15,	// Not a button, set to 1 if pad is 6-button
+
 	MD_BTN_Z =     1 << 11,
 	MD_BTN_Y =     1 << 10,
 	MD_BTN_X =     1 << 9,
@@ -532,14 +534,14 @@ void setup () {
 	debugln (F(" at startup"));
 
 	lcd_print_at (0, 0, F("R:"));
-	lcd_print (reset_inactive_level ? F("HIGH") : F("LOW"));
+	lcd_print (reset_inactive_level ? F("HI") : F("LO"));
 #else
 	reset_inactive_level = !FORCE_RESET_ACTIVE_LEVEL;
 	debug (F("Reset line is forced to active-"));
 	debugln (FORCE_RESET_ACTIVE_LEVEL ? F("HIGH") : F("LOW"));
 
-	lcd_print_at (0, 0, F("R-F:"));
-	lcd_print (FORCE_RESET_ACTIVE_LEVEL ? F("HIGH") : F("LOW"));
+	lcd_print_at (0, 0, F("R:"));
+	lcd_print (FORCE_RESET_ACTIVE_LEVEL ? F("HIF") : F("LOF"));
 
 #endif
 
@@ -621,6 +623,8 @@ inline void setup_pad () {
  * sake. The bit-button mapping is defined in the PadButton enum above.
  */
 word read_pad () {
+	static unsigned long last_bit_reset = 0;
+
 	// Invert all bits, since we want to use 1 for pressed
 	byte b1 = ~g_buttons_1;     // Select HIGH......: UDLRBxxC
 	byte b2 = ~g_buttons_2;     // Select LOW.......: UDxxAxxS
@@ -635,9 +639,21 @@ word read_pad () {
 	 * found a way :(.
 	 */
 	word buttons = (b1 & 0x38) | ((b1 & 0x01) << 2)
-							 | (b2 & 0xC0) | ((b2 & 0x08) >> 2) | (b2 & 0x01)
-							 | (((word) (b3 & 0xF0)) << 4)
-							 ;
+	             | (b2 & 0xC0) | ((b2 & 0x08) >> 2) | (b2 & 0x01)
+	             | ((b3 & 0xF0) << 4)
+	             | ((~b3 & 0x04) << 13)	// 6-button pad indicator
+	             ;
+
+	if (millis () - last_bit_reset >= 500) {
+		/* Set bit 2 of g_buttons_3 to 0. Since g_buttons_3 is only
+		 * set by 6-button pads, and since that bit will always read as
+		 * HIGH (it's the SELECT line), we can use it as a 6-button pad
+		 * indicator
+		 */
+		g_buttons_3 &= ~(1 << 2);
+
+		last_bit_reset = millis ();
+	}
 
 	return buttons;
 }
@@ -651,7 +667,7 @@ inline void handle_pad () {
 	word pad_status = read_pad ();
 
 #ifdef PAD_LED_PIN
-	digitalWrite (PAD_LED_PIN, pad_status != 0);
+	digitalWrite (PAD_LED_PIN, (pad_status & ~MD_PAD_6BTN) != 0);
 #endif
 
 #ifdef DEBUG_PAD
@@ -737,6 +753,11 @@ inline void handle_pad () {
 		lcd_print_at (1, 15, ' ');
 	else
 		lcd_print_at (1, 15, ' ');
+
+	if (pad_status & MD_PAD_6BTN)
+		lcd_print_at (0, 6, "P:6B");
+	else
+		lcd_print_at (0, 6, "P:3B");
 
 	if ((pad_status & TRIGGER_COMBO) == TRIGGER_COMBO && millis () - last_combo_time > IGNORE_COMBO_MS) {
 		if ((pad_status & RESET_COMBO) == RESET_COMBO) {
