@@ -99,7 +99,7 @@
 #define MODE_LED_B_PIN 11         // PWM
 #define PAD_LED_PIN LED_BUILTIN
 //#define ENABLE_SERIAL_DEBUG
-//#define ENABLE_LCD
+#define ENABLE_LCD
 
 
 /*******************************************************************************
@@ -509,9 +509,9 @@ void setup () {
 
 #ifdef ENABLE_LCD
 	lcd_start ();
-	lcd_print_at (0, 0, F("   Welcome to"));
-	lcd_print_at (1, 0, F("   MegaDrive++"));
-	delay (1000);
+	lcd_print_at (0, 0, F("-= Welcome to =-"));
+	lcd_print_at (1, 0, F("-= MegaDrive++=-"));
+	delay (2000);
 	lcd.clear ();
 #endif
 
