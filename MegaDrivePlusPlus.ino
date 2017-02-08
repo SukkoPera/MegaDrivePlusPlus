@@ -270,7 +270,7 @@ const byte mode_led_colors[][MODES_NO] = {
 
 // Video mode
 VideoMode current_mode;
-unsigned long mode_last_changed_time;
+unsigned long mode_last_changed_time = 0;
 
 // Reset level when NOT ACTIVE
 byte reset_inactive_level;
@@ -343,7 +343,7 @@ inline void save_mode () {
 inline void change_mode (int increment) {
 	// This also loops in [0, MODES_NO) backwards
 	VideoMode new_mode = static_cast<VideoMode> ((current_mode + increment + MODES_NO) % MODES_NO);
-	set_mode (new_mode);
+	set_mode (new_mode, true);
 }
 
 inline void next_mode () {
@@ -400,7 +400,7 @@ void flash_single_led () {
 #endif
 }
 
-void set_mode (VideoMode m) {
+void set_mode (VideoMode m, boolean save) {
 	lcd_print_at (0, 11, F("M:"));
 
 	switch (m) {
@@ -426,7 +426,9 @@ void set_mode (VideoMode m) {
 	rgb_led_update ();
 	flash_single_led ();
 
-	mode_last_changed_time = millis ();
+	if (save) {
+		mode_last_changed_time = millis ();
+	}
 }
 
 inline void handle_reset_button () {
@@ -494,8 +496,7 @@ void setup () {
 		// Palette EEPROM value is good
 		current_mode = static_cast<VideoMode> (tmp);
 	}
-	set_mode (current_mode);
-	mode_last_changed_time = 0;   // No need to save what we just loaded
+	set_mode (current_mode, false);		// Don't overwrite EEPROM
 
 	// Pheeew, that was quick! Let's go on with the rest!
 	dstart (57600);
@@ -573,8 +574,7 @@ void setup () {
 	 * above the led pins had not been set in output mode and the LCD had
 	 * not been initialized yet.
 	 */
-	set_mode (current_mode);
-	mode_last_changed_time = 0;   // No need to save what we just loaded
+	set_mode (current_mode, false);
 
 	// Prepare to read pad
 	setup_pad ();
@@ -744,19 +744,19 @@ inline void handle_pad () {
 #ifdef EUR_COMBO
 		} else if ((pad_status & EUR_COMBO) == EUR_COMBO) {
 			debugln (F("EUR mode combo detected"));
-			set_mode (EUR);
+			set_mode (EUR, true);
 			last_combo_time = millis ();
 #endif
 #ifdef USA_COMBO
 		} else if ((pad_status & USA_COMBO) == USA_COMBO) {
 			debugln (F("USA mode combo detected"));
-			set_mode (USA);
+			set_mode (USA, true);
 			last_combo_time = millis ();
 #endif
 #ifdef JAP_COMBO
 		} else if ((pad_status & JAP_COMBO) == JAP_COMBO) {
 			debugln (F("JAP mode combo detected"));
-			set_mode (JAP);
+			set_mode (JAP, true);
 			last_combo_time = millis ();
 #endif
 #ifdef NEXT_MODE_COMBO
