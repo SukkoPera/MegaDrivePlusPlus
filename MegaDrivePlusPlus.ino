@@ -149,9 +149,7 @@ enum __attribute__ ((__packed__)) PadButton {
  * ADVANCED SETTINGS
  ******************************************************************************/
 
-/* Offset in the EEPROM at which the current mode should be saved. Undefine to
- * disable mode saving.
- */
+// Offset in the EEPROM at which the current mode should be saved
 #define MODE_ROM_OFFSET 42
 
 // Time to wait after mode change before saving the new mode (milliseconds)
@@ -250,9 +248,7 @@ enum __attribute__ ((__packed__)) PadButton {
 	#define debugln(...)
 #endif
 
-#ifdef MODE_ROM_OFFSET
-	#include <EEPROM.h>
-#endif
+#include <EEPROM.h>
 
 enum __attribute__ ((__packed__)) VideoMode {
 	EUR,
@@ -313,7 +309,6 @@ void rgb_led_off () {
 }
 
 inline void save_mode () {
-#ifdef MODE_ROM_OFFSET
 	if (mode_last_changed_time > 0 && millis () - mode_last_changed_time >= MODE_SAVE_DELAY) {
 		debug (F("Saving video mode to EEPROM: "));
 		debugln (current_mode);
@@ -343,7 +338,6 @@ inline void save_mode () {
 		digitalWrite (MODE_LED_SINGLE_PIN, HIGH);
 #endif
 	}
-#endif  // MODE_ROM_OFFSET
 }
 
 inline void change_mode (int increment) {
@@ -493,7 +487,6 @@ void setup () {
 	pinMode (VIDEOMODE_PIN, OUTPUT);
 	pinMode (LANGUAGE_PIN, OUTPUT);
 	current_mode = EUR;
-#ifdef MODE_ROM_OFFSET
 	byte tmp = EEPROM.read (MODE_ROM_OFFSET);
 	debug (F("Loaded video mode from EEPROM: "));
 	debugln (tmp);
@@ -501,7 +494,6 @@ void setup () {
 		// Palette EEPROM value is good
 		current_mode = static_cast<VideoMode> (tmp);
 	}
-#endif
 	set_mode (current_mode);
 	mode_last_changed_time = 0;   // No need to save what we just loaded
 
