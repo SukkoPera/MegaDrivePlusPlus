@@ -53,7 +53,7 @@
  *                    | [ ]3.3V           MOSI/D11[X]~| [LED Blue]
  *                    | [ ]V.ref     ___    SS/D10[X]~| [LED Green]
  *          Reset Out | [X]A0       / N \       D9[X]~| [LED Red]
- *           Reset In | [X]A1      /  A  \      D8[ ] | [Single Pin Led]
+ *           Reset In | [X]A1      /  A  \      D8[X] | [Single Pin Led]
  * JP3/4 (Video Mode) | [X]A2      \  N  /      D7[X] | Pad Port Pin 1
  *   JP1/2 (Language) | [X]A3       \_0_/       D6[X]~| Pad Port Pin 2
  *          [LCD SDA] | [X]A4/SDA               D5[X]~| Pad Port Pin 3
