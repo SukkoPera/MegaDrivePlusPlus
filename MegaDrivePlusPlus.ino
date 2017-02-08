@@ -99,7 +99,7 @@
 #define MODE_LED_B_PIN 11         // PWM
 #define PAD_LED_PIN LED_BUILTIN
 //#define ENABLE_SERIAL_DEBUG
-#define ENABLE_LCD
+//#define ENABLE_LCD
 
 
 /*******************************************************************************
