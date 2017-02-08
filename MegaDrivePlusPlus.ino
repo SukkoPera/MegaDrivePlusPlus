@@ -401,8 +401,6 @@ void flash_single_led () {
 }
 
 void set_mode (VideoMode m, boolean save) {
-	lcd_print_at (0, 11, F("M:"));
-
 	switch (m) {
 		default:
 			// Invalid value
@@ -413,21 +411,24 @@ void set_mode (VideoMode m, boolean save) {
 			m = EUR;
 			// Fall through
 		case EUR:
-			lcd_print (F("EUR"));
 			digitalWrite (VIDEOMODE_PIN, LOW);    // PAL 50Hz
 			digitalWrite (LANGUAGE_PIN, HIGH);    // ENG
+			lcd_print_at (0, 13, F("EUR"));
 			break;
 		case USA:
-			lcd_print (F("USA"));
 			digitalWrite (VIDEOMODE_PIN, HIGH);   // NTSC 60Hz
 			digitalWrite (LANGUAGE_PIN, HIGH);    // ENG
+			lcd_print_at (0, 13, F("USA"));
 			break;
 		case JAP:
-			lcd_print (F("JAP"));
 			digitalWrite (VIDEOMODE_PIN, HIGH);   // NTSC 60Hz
 			digitalWrite (LANGUAGE_PIN, LOW);     // JAP
+			lcd_print_at (0, 13, F("JAP"));
 			break;
 	}
+
+	// Update LCD only now, so that at startup mode is set ASAP
+	lcd_print_at (0, 11, F("M:"));
 
 	current_mode = m;
 	rgb_led_update ();
