@@ -405,6 +405,13 @@ void set_mode (VideoMode m, boolean save) {
 
 	switch (m) {
 		default:
+			// Invalid value
+			debug (F("ERROR: Tried to set invalid mode: "));
+			debugln (m);
+
+			// Get back to something meaningful
+			m = EUR;
+			// Fall through
 		case EUR:
 			lcd_print (F("EUR"));
 			digitalWrite (VIDEOMODE_PIN, LOW);    // PAL 50Hz
@@ -488,14 +495,9 @@ void setup () {
 	 */
 	pinMode (VIDEOMODE_PIN, OUTPUT);
 	pinMode (LANGUAGE_PIN, OUTPUT);
-	current_mode = EUR;
-	byte tmp = EEPROM.read (MODE_ROM_OFFSET);
+	current_mode = static_cast<VideoMode> (EEPROM.read (MODE_ROM_OFFSET));
 	debug (F("Loaded video mode from EEPROM: "));
-	debugln (tmp);
-	if (tmp < MODES_NO) {
-		// Palette EEPROM value is good
-		current_mode = static_cast<VideoMode> (tmp);
-	}
+	debugln (current_mode);
 	set_mode (current_mode, false);		// Don't overwrite EEPROM
 
 	// Pheeew, that was quick! Let's go on with the rest!
