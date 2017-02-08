@@ -291,6 +291,26 @@ volatile byte g_buttons_1 = 0xFF;
 volatile byte g_buttons_2 = 0xFF;
 volatile byte g_buttons_3 = 0xFF;
 
+void rgb_led_off () {
+#ifdef ENABLE_MODE_LED_RGB
+	byte c = 0;
+
+#ifdef RGB_LED_COMMON_ANODE
+	c = 255;
+#endif
+
+#ifdef MODE_LED_R_PIN
+	analogWrite (MODE_LED_R_PIN, c);
+#endif
+
+#ifdef MODE_LED_G_PIN
+	analogWrite (MODE_LED_G_PIN, c);
+#endif
+
+#ifdef MODE_LED_B_PIN
+	analogWrite (MODE_LED_B_PIN, c);
+#endif
+}
 
 inline void save_mode () {
 #ifdef MODE_ROM_OFFSET
@@ -307,30 +327,13 @@ inline void save_mode () {
 		mode_last_changed_time = 0;    // Don't save again
 
 		// Blink led to tell the user that mode was saved
-#ifdef ENABLE_MODE_LED_RGB
-		byte c = 0;
-
-#ifdef RGB_LED_COMMON_ANODE
-		c = 255 - c;
-#endif
-
-#ifdef MODE_LED_R_PIN
-		analogWrite (MODE_LED_R_PIN, c);
-#endif
-
-#ifdef MODE_LED_G_PIN
-		analogWrite (MODE_LED_G_PIN, c);
-#endif
-
-#ifdef MODE_LED_B_PIN
-		analogWrite (MODE_LED_B_PIN, c);
-#endif
+		rgb_led_off ();
 
 		// Keep off for a bit
 		delay (200);
 
 		// Turn leds back on
-		update_mode_leds ();
+		rgb_led_update ();
 #endif  // ENABLE_MODE_LED_RGB
 
 #ifdef MODE_LED_SINGLE_PIN
@@ -357,7 +360,7 @@ inline void prev_mode () {
 	change_mode (-1);
 }
 
-void update_mode_leds () {
+void rgb_led_update () {
 #ifdef ENABLE_MODE_LED_RGB
 	const byte *colors = mode_led_colors[current_mode];
 	byte c;
@@ -387,9 +390,13 @@ void update_mode_leds () {
 #endif
 
 #endif  // ENABLE_MODE_LED_RGB
+}
 
+void flash_single_led () {
 #ifdef MODE_LED_SINGLE_PIN
-	// WARNING: This loop must be reasonably shorter than LONGPRESS_LEN in the worst case!
+	/* WARNING: This loop must be reasonably shorter than LONGPRESS_LEN in
+	 * the worst case!
+	 */
 	for (byte i = 0; i < current_mode + 1; ++i) {
 		digitalWrite (MODE_LED_SINGLE_PIN, LOW);
 		delay (40);
@@ -422,7 +429,8 @@ void set_mode (VideoMode m) {
 	}
 
 	current_mode = m;
-	update_mode_leds ();
+	rgb_led_update ();
+	flash_single_led ();
 
 	mode_last_changed_time = millis ();
 }
