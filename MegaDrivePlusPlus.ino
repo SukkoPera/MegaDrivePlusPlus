@@ -491,6 +491,8 @@ void reset_console () {
 }
 
 void setup () {
+	noInterrupts ();
+
 	/* Init video mode: We do this as soon as possible since the MegaDrive's
 	 * reset line seems to be edge-triggered, so we cannot hold the console
 	 * in the reset state while we are setting up stuff. We'll take care of
@@ -542,7 +544,6 @@ void setup () {
 
 	lcd_print_at (0, 0, F("R:"));
 	lcd_print (FORCE_RESET_ACTIVE_LEVEL ? F("HIF") : F("LOF"));
-
 #endif
 
 	if (reset_inactive_level == LOW) {
@@ -553,6 +554,10 @@ void setup () {
 		pinMode (RESET_IN_PIN, INPUT_PULLUP);
 #endif
 	}
+
+	// Reset console so that it picks up the new mode/lang
+	pinMode (RESET_OUT_PIN, OUTPUT);
+	reset_console ();
 
 	// Setup leds
 #ifdef MODE_LED_R_PIN
@@ -584,14 +589,12 @@ void setup () {
 	// Prepare to read pad
 	setup_pad ();
 
-	// Reset console so that it picks up the new mode/lang
-	pinMode (RESET_OUT_PIN, OUTPUT);
-	//~ reset_console ();
-
 	// We are ready to roll!
 	lcd_print_at (1, 0, F("     Ready!     "));
 	delay (1000);
 	lcd_print_at (1, 0, F("                "));
+
+	interrupts ();
 }
 
 inline void setup_pad () {
