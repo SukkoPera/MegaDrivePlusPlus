@@ -1,7 +1,7 @@
 /*******************************************************************************
  * This file is part of MegaDrive++.                                           *
  *                                                                             *
- * Copyright (C) 2015-2017 by SukkoPera <software@sukkology.net>               *
+ * Copyright (C) 2015-2019 by SukkoPera <software@sukkology.net>               *
  *                                                                             *
  * MegaDrive++ is free software: you can redistribute it and/or modify         *
  * it under the terms of the GNU General Public License as published by        *
@@ -221,7 +221,7 @@ enum __attribute__ ((__packed__)) PadButton {
 	 * See: https://bitbucket.org/fmalpartida/new-liquidcrystal/wiki/Home
 	 *
 	 * This page also helped me with many displays:
-	 * https://arduino-info.wikispaces.com/LCD-Blue-I2C
+	 * https://arduinoinfo.mywikis.net/wiki/LCD-Blue-I2C
 	 */
 	LiquidCrystal_I2C lcd (0x3f, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 
