@@ -12,7 +12,7 @@
 - **Reset-From-Pad** (AKA **In-Game-Reset** AKA **IGR**): Press **Start + A + B + C**.
   - Supports consoles with both active-high and active-low reset signals by
 autosensing (i.e.: **all console revisions**!).
-- Uses a **cheap Arduino Nano board**, but also works on Arduino Uno or even on a standalone Atmel ATmega168/328 microcontroller.
+- Uses a **cheap Arduino Nano board**.
 - Uses the popular **Arduino environment**, allowing for easy development, testing and modifications.
 - Even though default settings are recommended, **everything can be customized** to taste.
 - Last but not least, it is **Open Source and Free Software**!
