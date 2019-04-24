@@ -12,14 +12,9 @@
 - **Reset-From-Pad** (AKA **In-Game-Reset** AKA **IGR**): Press **Start + A + B + C**.
   - Supports consoles with both active-high and active-low reset signals by
 autosensing (i.e.: **all console revisions**!).
-- Uses **cheap *Atmel AVR* microcontrollers**.
-  - Can be **flashed on different chips** (ATtiny's, ATmega's, or **even a full
-Arduino** board), but please note that **not all features are supported on all chips**, depending on
-the number of available I/O pins, please read on for details.
-  - If flashed on an ATtinyX4(A), it is **pin-to-pin compatibile with the _D4s/Seb mod_**.
-- Even though default settings are recommended, **everything can be customized** to taste.
+- Uses a **cheap Arduino Nano board**, but also works on Arduino Uno or even on a standalone ATmega168/328 microcontroller.
 - Uses the popular **Arduino environment**, allowing for easy development, testing and modifications.
+- Even though default settings are recommended, **everything can be customized** to taste.
 - Last but not least, it is **Open Source and Free Software**!
-
 
 If you are interested in modding your console with MegaDrive++, please head to the [wiki](https://github.com/SukkoPera/MegaDrivePlusPlus/wiki). There you will find full instructions about what chip to buy, how to put MegaDrive++ on it and how to install it, with a full wiring guide for a few different Mega Drive/Genesis models that were sold.
