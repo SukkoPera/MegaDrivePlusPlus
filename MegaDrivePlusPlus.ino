@@ -78,8 +78,6 @@
 #define MODE_LED_G_PIN 10         // PWM
 #define MODE_LED_B_PIN 11         // PWM
 #define PAD_LED_PIN LED_BUILTIN
-//#define ENABLE_SERIAL_DEBUG
-//#define ENABLE_LCD
 
 
 /*******************************************************************************
@@ -111,17 +109,12 @@ enum __attribute__ ((__packed__)) PadButton {
  */
 #define TRIGGER_COMBO (MD_BTN_START | MD_BTN_B)
 
-/* Button combos to perform other actions. These are to be considered in
- * addition to TRIGGER_COMBO.
- *
- * Note that we cannot detect certain buttons on some platforms
+/* Reset combo. This (and the following) are to be considered in addition to
+ * TRIGGER_COMBO.
  */
 #define RESET_COMBO (MD_BTN_A | MD_BTN_C)
 
-/* On ATtinyX61's, ATtinyX313's and Arduinos we can detect all buttons, so we
- * can make up a specific combo for every mode that switches straight to it,
- * no need to cycle among modes.
- */
+// Region/video mode combos
 #define EUR_COMBO MD_BTN_DOWN
 #define USA_COMBO MD_BTN_RIGHT
 #define JAP_COMBO MD_BTN_LEFT
@@ -140,15 +133,8 @@ enum __attribute__ ((__packed__)) PadButton {
 // Force the reset line level when active. Undefine to enable auto-detection.
 //#define FORCE_RESET_ACTIVE_LEVEL LOW
 
-/* Colors to use to indicate the video mode, in 8-bit RGB componentes. You can
- * use any value here if your led is connected to PWM-capable pins, otherwise
- * values specified here will be interpreted as either fully off (if 0) or fully
- * on (if anything else).
- *
- * Note that using PWM-values here sometimes causes unpredictable problems. This
- * happened to me on an ATtiny861, and it's probably due to how pins and timers
- * interact. It seems to work fine on a full Arduino, but unless you really want
- * weird colors, use only 0x00 and 0xFF.
+/* Colors to use to indicate the video mode, in 8-bit RGB componentes. Unless
+ * you really want weird colors, use only 0x00 (off) and 0xFF (on).
  *
  * Oh, and good luck trying to fit a 5mm RGB led in the MegaDrive ;).
  */
@@ -159,13 +145,8 @@ enum __attribute__ ((__packed__)) PadButton {
 // Define this if your led is common-anode, comment out for common-cathode
 //#define MODE_LED_COMMON_ANODE
 
-/* Use a single led to indicate the video mode. This is enabled automatically
- * in place of the RGB led when low flash space is detected, but since this
- * does NOT disable the RGB led, it can be used together with it, provided that
- * you have a free pin.
- *
- * Basically, the single led is blinked 1-3 times according to which mode is set
- * (1 is EUR, see enum VideoMode below).
+/* Also indicate the video mode with a single led. It is blinked 1-3 times
+ * according to which mode is set (1 is EUR, see enum VideoMode below).
  */
 #define MODE_LED_SINGLE_PIN 8
 
@@ -185,22 +166,38 @@ enum __attribute__ ((__packed__)) PadButton {
 #define DEBUG_PAD
 #endif
 
+
+/*******************************************************************************
+ * DEBUGGING SUPPORT
+ ******************************************************************************/
+
+/* Send debug messages to serial port. This requires Nick Gammon's
+ * SendOnlySoftwareSerial library, get it at:
+ * https://github.com/nickgammon/SendOnlySoftwareSerial
+ */
+//#define ENABLE_SERIAL_DEBUG
+
+/* Show some information on a 20x2 LCD screen: how the reset line is detected,
+ * what buttons are pressed, etc. The screen must be connected via i2c and will
+ * be driven with F. Malpartida's New LiquidCrystal library because I like it
+ * and it works fine with my display. Get it at:
+ * https://bitbucket.org/fmalpartida/new-liquidcrystal/wiki/Home
+ */
+//#define ENABLE_LCD
+
 /*******************************************************************************
  * END OF SETTINGS
  ******************************************************************************/
+
 
 #ifdef ENABLE_LCD
 	#include <LiquidCrystal_I2C.h>
 
 	/* Init LCD - This can vary depending on your display, adapter, etc...
-	 * This uses F. Malpartida's New LiquidCrystal library because I like
-	 * it and it works fine with my display. Experiment with the library
-	 * examples until you find a working configuration for your display and
-	 * then port it here.
+	 * Experiment with the LCD library examples until you find a working
+	 * configuration for your display and then port it here.
 	 *
-	 * See: https://bitbucket.org/fmalpartida/new-liquidcrystal/wiki/Home
-	 *
-	 * This page also helped me with many displays:
+	 * This page helped me with many displays:
 	 * https://arduinoinfo.mywikis.net/wiki/LCD-Blue-I2C
 	 */
 	LiquidCrystal_I2C lcd (0x3f, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
