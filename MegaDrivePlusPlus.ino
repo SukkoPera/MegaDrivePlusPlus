@@ -352,10 +352,6 @@ inline void next_mode () {
 	change_mode (+1);
 }
 
-inline void prev_mode () {
-	change_mode (-1);
-}
-
 void rgb_led_update () {
 #ifdef ENABLE_MODE_LED_RGB
 	const byte *colors = mode_led_colors[current_mode];
