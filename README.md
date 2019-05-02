@@ -23,6 +23,8 @@ If you were a MegaDrive++ user before May 2019, please note that a few things ha
 - The old *6button*/*lcd_support* branch has become the *master* branch: **this is now the recommended version** to use and the only supported hardware is the Arduino Nano.
 - The old *master* branch has become the *legacy* branch: this is only kept for reference, it is no longer supported and won't get any updates in the future.
 
+[See this](https://github.com/SukkoPera/MegaDrivePlusPlus/wiki/Legacy-Branch) for the rationale behind this change.
+
 ### Installation
 If you are interested in modding your console with MegaDrive++, please [head to the wiki](https://github.com/SukkoPera/MegaDrivePlusPlus/wiki). There you will find full instructions about what chip to buy, how to put MegaDrive++ on it and how to install it, with a full wiring guide for a few different Mega Drive/Genesis models that were sold.
 
@@ -44,4 +46,5 @@ If you want to support the development of this project, buy me a coffee:
 If you need help or have questions, you can join [the official Telegram group](https://t.me/joinchat/HUHdWBC9J9JnYIrvTYfZmg).
 
 ### Thanks
-- TBD
+- D4s/Seb for their work on the original mod that inspired this project.
+- All the users who have contributed testing games or suggesting ideas for improvement.
