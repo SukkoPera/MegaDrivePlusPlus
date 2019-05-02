@@ -62,12 +62,10 @@
  *   UART is right on PORTD on the 328. Actually we only need the TX pin
  *   (ATmega328 pin 3, mapped to pin 1 on an Arduino), so we keep that one free.
  *   We cannot use the hardware UART support though, since that would also
- *   prevent us from using pin 0 at will. Thus we resort to using Nick Gammon's
- *   SendOnlySoftwareSerial library, available here:
- *   https://forum.arduino.cc/index.php?topic=112013.0. Note that while we are
- *   not tied to any specific pin anymore at this point, we really want to use
- *   pin 1, since that is connected to the onboard Serial <-> USB converter on
- *   Arduino boards.
+ *   prevent us from using pin 0 at will, thus we resort to using a send-only
+ *   software serial implementation. Note that while we are no longer tied to
+ *   any specific pin at this point, we really want to use pin 1, since that is
+ *   connected to the onboard Serial <-> USB converter on Arduino boards.
  */
 
 #define RESET_IN_PIN A1
@@ -177,7 +175,7 @@ enum __attribute__ ((__packed__)) PadButton {
  */
 //#define ENABLE_SERIAL_DEBUG
 
-/* Show some information on a 20x2 LCD screen: how the reset line is detected,
+/* Show some information on a 16x2 LCD screen: how the reset line is detected,
  * what buttons are pressed, etc. The screen must be connected via i2c and will
  * be driven with F. Malpartida's New LiquidCrystal library because I like it
  * and it works fine with my display. Get it at:
