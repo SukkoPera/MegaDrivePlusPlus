@@ -786,18 +786,6 @@ inline void handle_pad () {
 			set_mode (JAP, true);
 			last_combo_time = millis ();
 #endif
-#ifdef NEXT_MODE_COMBO
-		} else if ((pad_status & NEXT_MODE_COMBO) == NEXT_MODE_COMBO) {
-			debugln (F("Next mode combo detected"));
-			next_mode ();
-			last_combo_time = millis ();
-#endif
-#ifdef PREV_MODE_COMBO
-		} else if ((pad_status & PREV_MODE_COMBO) == PREV_MODE_COMBO) {
-			debugln (F("Previous mode combo detected"));
-			prev_mode ();
-			last_combo_time = millis ();
-#endif
 		}
 	}
 }
