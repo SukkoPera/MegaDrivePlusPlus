@@ -24,27 +24,7 @@
  * https://github.com/SukkoPera/MegaDrivePlusPlus
  */
 
-/* Bare ATmega328 Wiring diagram:
- *
- *                    ,-----_-----.
- *                    |1     A5 28| [LCD SCL]
- *     Pad Port Pin 9 |2   0 A4 27| [LCD SDA]
- *                    |3   1 A3 26| JP1/2 (Language)
- *     Pad Port Pin 7 |4   2 A2 25| JP3/4 (Video Mode)
- *     Pad Port Pin 6 |5   3 A1 24| Reset In
- *     Pad Port Pin 4 |6   4 A0 23| Reset Out
- *                +5V |7        22| GND
- *                GND |8        21| +5V
- *                    |9        20| +5V
- *                    |10    13 19| (Built-in LED)
- *     Pad Port Pin 3 |11  5 12 18|
- *     Pad Port Pin 2 |12  6 11 17| [LED Blue]
- *     Pad Port Pin 1 |13  7 10 16| [LED Green]
- *   [Single Pin Led] |14  8  9 15| [LED Red]
- *                    `-----------'
- *
- *
- * Arduino Nano:
+/* Arduino Nano:
  *
  *                                 +-----+
  *                    +------------| USB |------------+
