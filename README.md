@@ -1,15 +1,15 @@
 ## MegaDrive++
 
-MegaDrive++ is a modchip for the **Sega Mega Drive** (AKA **Sega Genesis**). It has the following features:
+MegaDrive++ is a modchip for the Sega Mega Drive (AKA Genesis). It has the following features:
 
 - **EUR/USA/JAP mode switching**: this effectively **makes your console universal**, allowing it to **bypass region checks** and to **run all games** without resorting to an adapter.
   - If you come from a PAL region, you will also be able to **run most games at 60 Hz**, which means **full-speed** and **full-screen**! Get rid of those **black bars**! See the difference [here](https://youtu.be/X1CW8Da8i1o)!
   - The mod is **switchless**, so you don't need to modify the aesthetics of your console installing ugly switches, but rather you will be able to change the region:
-    - Through the **Reset button: Keep pushed** to cycle through modes.
-    - From the Player 1 controller pad: Press **Start + B + Up/Down** to cycle through modes or **Start + Down/Left/Right** to set a certain mode (according to the actual chip you have installed, more on this below).
+    - Through the <kbd>Reset</kbd> button: **Keep pushed** to cycle through modes.
+    - From the Player 1 controller pad: Press <kbd>Start</kbd> + <kbd>B</kbd> + <kbd>Down</kbd>/<kbd>Left</kbd>/<kbd>Right</kbd> to set your desired mode.
   - The last used mode is saved automatically after 5 seconds and reused at power up.
   - Supports a single led, common-anode or common-cathode dual or RGB LEDs to indicate the current mode (Colors can be set to any value when PWM pins are available).
-- **Reset-From-Pad** (AKA **In-Game-Reset** AKA **IGR**): Press **Start + A + B + C**.
+- **Reset-From-Pad** (AKA **In-Game-Reset** AKA **IGR**): Press <kbd>Start</kbd> + <kbd>A</kbd> + <kbd>B</kbd> + <kbd>C</kbd>.
   - Supports consoles with both active-high and active-low reset signals by
 autosensing (i.e.: **all console revisions**!).
 - Uses a **cheap Arduino Nano board**.
@@ -21,7 +21,7 @@ autosensing (i.e.: **all console revisions**!).
 If you are interested in modding your console with MegaDrive++, please head to the [wiki](https://github.com/SukkoPera/MegaDrivePlusPlus/wiki). There you will find full instructions about what chip to buy, how to put MegaDrive++ on it and how to install it, with a full wiring guide for a few different Mega Drive/Genesis models that were sold.
 
 ### License
-MegaDrive++ is Copyright (C) 2015-2019 by SukkoPera.
+MegaDrive++ is Copyright &copy; 2015-2019 by SukkoPera.
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
