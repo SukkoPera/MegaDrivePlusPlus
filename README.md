@@ -26,7 +26,7 @@ If you were a MegaDrive++ user before May 2019, please note that a few things ha
 [See this](https://github.com/SukkoPera/MegaDrivePlusPlus/wiki/Legacy-Branch) for the rationale behind this change.
 
 ### Installation
-If you are interested in modding your console with MegaDrive++, please [head to the wiki](https://github.com/SukkoPera/MegaDrivePlusPlus/wiki). There you will find full instructions about what chip to buy, how to put MegaDrive++ on it and how to install it, with a full wiring guide for a few different Mega Drive/Genesis models that were sold.
+If you are interested in modding your console with MegaDrive++, please [head to the wiki](https://github.com/SukkoPera/MegaDrivePlusPlus/wiki). There you will find full instructions about what to buy, how to compile MegaDrive++ and how to wire it in a few different Mega Drive/Genesis models that were sold.
 
 ### License
 MegaDrive++ is Copyright &copy; 2015-2019 by SukkoPera.
