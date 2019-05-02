@@ -10,10 +10,9 @@ MegaDrive++ has the following features:
     - Through the <kbd>Reset</kbd> button: **Keep pushed** to cycle through modes.
     - From the Player 1 controller pad: Press <kbd>Start</kbd> + <kbd>B</kbd> + <kbd>Down</kbd>/<kbd>Left</kbd>/<kbd>Right</kbd> to set your desired mode.
   - The last used mode is saved automatically after 5 seconds and reused at power up.
-  - Supports a single led, common-anode or common-cathode dual or RGB LEDs to indicate the current mode (Colors can be set to any value when PWM pins are available).
+  - Supports a single, dual or RGB LED to indicate the current mode.
 - **Reset-From-Pad** (AKA **In-Game-Reset** AKA **IGR**): Press <kbd>Start</kbd> + <kbd>A</kbd> + <kbd>B</kbd> + <kbd>C</kbd>.
-  - Supports consoles with both active-high and active-low reset signals by
-autosensing (i.e.: **all console revisions**!).
+  - Supports consoles with both active-high and active-low reset signals by autosensing (i.e.: **all console revisions**!).
 - Uses a **cheap Arduino Nano board**.
 - Uses the popular **Arduino environment**, allowing for easy development, testing and modifications.
 - Even though default settings are recommended, **everything can be customized** to taste.
@@ -25,7 +24,7 @@ If you were a MegaDrive++ user before May 2019, please note that a few things ha
 - The old *master* branch has become the *legacy* branch: this is only kept for reference, it is no longer supported and won't get any updates in the future.
 
 ### Installation
-If you are interested in modding your console with MegaDrive++, please head to the [wiki](https://github.com/SukkoPera/MegaDrivePlusPlus/wiki). There you will find full instructions about what chip to buy, how to put MegaDrive++ on it and how to install it, with a full wiring guide for a few different Mega Drive/Genesis models that were sold.
+If you are interested in modding your console with MegaDrive++, please [head to the wiki](https://github.com/SukkoPera/MegaDrivePlusPlus/wiki). There you will find full instructions about what chip to buy, how to put MegaDrive++ on it and how to install it, with a full wiring guide for a few different Mega Drive/Genesis models that were sold.
 
 ### License
 MegaDrive++ is Copyright &copy; 2015-2019 by SukkoPera.
