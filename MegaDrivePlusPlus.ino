@@ -593,9 +593,9 @@ inline void setup_pad () {
  * SELECT line is not triggered and this will keep triggering resets.
  */
 void clear_pad () {
-	byte g_buttons_1 = 0xFF;
-	byte g_buttons_2 = 0xFF;
-	byte g_buttons_3 = 0xFF;
+	g_buttons_1 = 0xFF;
+	g_buttons_2 = 0xFF;
+	g_buttons_3 = 0xFF;
 }
 
 /******************************************************************************/
