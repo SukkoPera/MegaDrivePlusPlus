@@ -589,6 +589,15 @@ inline void setup_pad () {
 	interrupts ();            // Enable all interrupts, probably redundant
 }
 
+/* Clear the pad button registers. This is useful because during resets the
+ * SELECT line is not triggered and this will keep triggering resets.
+ */
+void clear_pad () {
+	g_buttons_1 = 0xFF;
+	g_buttons_2 = 0xFF;
+	g_buttons_3 = 0xFF;
+}
+
 /******************************************************************************/
 
 
@@ -737,7 +746,7 @@ inline void handle_pad () {
 		if ((pad_status & RESET_COMBO) == RESET_COMBO) {
 			debugln (F("Reset combo detected"));
 			reset_console ();
-			pad_status = 0;     // Avoid continuous reset (pad_status might keep the last value during reset!)
+			clear_pad ();     // Avoid continuous resets
 			last_combo_time = millis ();
 #ifdef EUR_COMBO
 		} else if ((pad_status & EUR_COMBO) == EUR_COMBO) {
