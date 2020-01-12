@@ -415,7 +415,7 @@ void set_mode (VideoMode m, boolean save) {
 inline void handle_reset_button () {
 	static byte debounce_level = LOW;
 	static bool reset_pressed_before = false;
-	static long last_int = 0, reset_press_start = 0;
+	static unsigned long last_int = 0, reset_press_start = 0;
 	static unsigned int hold_cycles = 0;
 
 	byte reset_level = digitalRead (RESET_IN_PIN);
@@ -645,7 +645,7 @@ word read_pad () {
 #define IGNORE_COMBO_MS LONGPRESS_LEN
 
 inline void handle_pad () {
-	static long last_combo_time = 0;
+	static unsigned long last_combo_time = 0;
 
 	word pad_status = read_pad ();
 
