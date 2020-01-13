@@ -618,8 +618,8 @@ void clear_pad () {
 	/* This also looks like a good place to initialize the controller snooping
 	 * state machine
 	 */
-	volatile byte *state = &GPIOR0;
-	*state = 1 << 0;			// i.e.: PS_INIT (defined in readpad.S)
+	volatile byte *state = &GPIOR2;
+	*state = 0;			// i.e.: PS_INIT (defined in readpad.S)
 }
 
 /******************************************************************************/
