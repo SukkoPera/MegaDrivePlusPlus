@@ -632,7 +632,10 @@ void clear_pad () {
 word read_pad () {
 	static unsigned long last_bit_reset = 0;
 
-	// Invert all bits, since we want to use 1 for pressed
+	/* Invert all bits, since we want to use 1 for pressed
+	 *
+	 * Note that bit 2 in all of these is the SELECT line.
+	 */
 	byte b1 = ~g_buttons_1;     // Select HIGH......: UDLRBxxC
 	byte b2 = ~g_buttons_2;     // Select LOW.......: UDxxAxxS
 	byte b3 = ~g_buttons_3;     // Select PULSE-3...: ZYXMxxxx
@@ -642,24 +645,31 @@ word read_pad () {
 	 * spurious data from b3, i.e.: Keeping X pressed reports LEFT, Y reports
 	 * DOWN, etc... This way we restrict the problem to X and MODE.
 	 *
-	 * It would be great to eliminate the problem completely, but we still haven't
-	 * found a way :(.
+	 * It would be great to eliminate the problem completely, but we still
+	 * haven't found a way :(.
 	 */
 	word buttons = (b1 & 0x38) | ((b1 & 0x01) << 2)
 	             | (b2 & 0xC0) | ((b2 & 0x08) >> 2) | (b2 & 0x01)
 	             | ((b3 & 0xF0) << 4)
-	             | ((~b3 & 0x04) << 13)	// 6-button pad indicator
 	             ;
 
-	if (millis () - last_bit_reset >= 500) {
-		/* Set bit 2 of g_buttons_3 to 0. Since g_buttons_3 is only
-		 * set by 6-button pads, and since that bit will always read as
-		 * HIGH (it's the SELECT line), we can use it as a 6-button pad
+	if ((g_buttons_3 & 0x04) || (last_bit_reset != 0 && millis () - last_bit_reset < 500))	{
+		/* g_buttons_3 is only set by 6-button pads. Since bit 2 will always
+		 * read as HIGH (it's the SELECT line), we can use it as a 6-button pad
 		 * indicator
 		 */
-		g_buttons_3 &= ~(1 << 2);
+		buttons |= MD_PAD_6BTN;
 
-		last_bit_reset = millis ();
+		if (millis () - last_bit_reset >= 500) {
+			/* Set bit 2 of g_buttons_3 to 0. Since g_buttons_3 is only
+			 * set by 6-button pads, and since that bit will always read as
+			 * HIGH (it's the SELECT line), we can use it as a 6-button pad
+			 * indicator
+			 */
+			g_buttons_3 &= ~(1 << 2);
+
+			last_bit_reset = millis ();
+		}
 	}
 
 	return buttons;
