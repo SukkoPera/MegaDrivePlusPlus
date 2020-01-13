@@ -179,19 +179,22 @@ const unsigned long DEBOUNCE_BUTTONS_MS = 55U;
  * DEBUGGING SUPPORT
  ******************************************************************************/
 
-/* Send debug messages to serial port. This requires Nick Gammon's
- * SendOnlySoftwareSerial library, get it at:
- * https://github.com/nickgammon/SendOnlySoftwareSerial
- */
-//~ #define ENABLE_SERIAL_DEBUG
-
 /* Show some information on a 16x2 LCD screen: how the reset line is detected,
  * what buttons are pressed, etc. The screen must be connected via i2c and will
  * be driven with F. Malpartida's New LiquidCrystal library because I like it
  * and it works fine with my display. Get it at:
  * https://bitbucket.org/fmalpartida/new-liquidcrystal/wiki/Home
  */
-#define ENABLE_LCD
+//#define ENABLE_LCD
+
+/* Send debug messages to serial port. This requires Nick Gammon's
+ * SendOnlySoftwareSerial library, get it at:
+ * https://github.com/nickgammon/SendOnlySoftwareSerial
+ */
+//#define ENABLE_SERIAL_DEBUG
+
+// Print the controller status on serial. Useful for debugging.
+//#define DEBUG_PAD
 
 /*******************************************************************************
  * END OF SETTINGS
