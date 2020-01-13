@@ -458,7 +458,7 @@ inline void handle_reset_button () {
 			}
 		} else {
 			// Button has not just been pressed/released
-			if (reset_level != reset_inactive_level && millis () % reset_press_start >= LONGPRESS_LEN * (hold_cycles + 1)) {
+			if (reset_level != reset_inactive_level && millis () - reset_press_start >= LONGPRESS_LEN * (hold_cycles + 1)) {
 				// Reset has been held for a while
 				debugln (F("Reset button held"));
 				++hold_cycles;
