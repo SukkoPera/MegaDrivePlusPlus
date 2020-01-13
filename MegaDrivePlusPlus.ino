@@ -169,10 +169,10 @@ enum __attribute__ ((__packed__)) PadButton {
 // Duration of the reset pulse (milliseconds)
 #define RESET_LEN 350
 
-// Print the controller status on serial. Useful for debugging.
-//~ #ifdef ENABLE_SERIAL_DEBUG
-//~ #define DEBUG_PAD
-//~ #endif
+/* Button presses will be considered valid only after it has been stable for
+ * this amount of milliseconds
+ */
+const unsigned long DEBOUNCE_BUTTONS_MS = 55U;
 
 
 /*******************************************************************************
@@ -625,6 +625,32 @@ void clear_pad () {
 /******************************************************************************/
 
 
+/* Makes sure that the same button/combo has been pressed steadily for some
+ * time.
+ */
+word debounce_buttons (word buttons) {
+	static word currentButtons = 0;
+	static word oldButtons = 0;
+	static unsigned long pressedOn = 0;
+
+	word ret = currentButtons;
+
+	if (buttons == oldButtons) {
+		if (millis () - pressedOn > DEBOUNCE_BUTTONS_MS) {
+			// Same combo held long enough
+			ret = currentButtons = buttons;
+		} else {
+			// Combo held not long enough (yet)
+		}
+	} else {
+		// Buttons bouncing
+		oldButtons = buttons;
+		pressedOn = millis ();
+	}
+
+	return ret;
+}
+
 /* The basic idea here is to make up a word (i.e.: 2 bytes) where each bit
  * represents the state of a button, with 1 meaning pressed, for commodity's
  * sake. The bit-button mapping is defined in the PadButton enum above.
@@ -682,6 +708,7 @@ inline void handle_pad () {
 	static unsigned long last_combo_time = 0;
 
 	word pad_status = read_pad ();
+	pad_status = debounce_buttons (pad_status);
 
 #ifdef PAD_LED_PIN
 	fastDigitalWrite (PAD_LED_PIN, (pad_status & ~MD_PAD_6BTN) != 0);
