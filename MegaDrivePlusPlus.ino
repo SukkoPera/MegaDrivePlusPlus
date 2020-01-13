@@ -480,26 +480,26 @@ void reset_console () {
 }
 
 void setup () {
-	noInterrupts ();
-
 	/* Init video mode: We do this as soon as possible since the MegaDrive's
 	 * reset line seems to be edge-triggered, so we cannot hold the console
 	 * in the reset state while we are setting up stuff. We'll take care of
 	 * the rest later.
 	 */
+	noInterrupts ();
 	fastPinMode (VIDEOMODE_PIN, OUTPUT);
 	fastPinMode (LANGUAGE_PIN, OUTPUT);
 	current_mode = static_cast<VideoMode> (EEPROM.read (MODE_ROM_OFFSET));
 	debug (F("Loaded video mode from EEPROM: "));
 	debugln (current_mode);
 	set_mode (current_mode, false);		// Don't overwrite EEPROM
+	interrupts ();
 
 	// Pheeew, that was quick! Let's go on with the rest!
 	dstart (57600);
 	debugln (F("Starting up..."));
 
 #ifdef ENABLE_LCD
-	debugln (F("Initializing LCD"));
+	// Note that this will hang if interrupts are disabled!
 	lcd_start ();
 	lcd_print_at (0, 0, F("-= Welcome to =-"));
 	lcd_print_at (1, 0, F("-= MegaDrive++=-"));
@@ -585,8 +585,6 @@ void setup () {
 	lcd_print_at (1, 0, F("                "));
 
 	debugln (F("Ready!"));
-
-	interrupts ();
 }
 
 void setup_pad () {
@@ -650,7 +648,7 @@ word read_pad () {
 	word buttons = (b1 & 0x38) | ((b1 & 0x01) << 2)
 	             | (b2 & 0xC0) | ((b2 & 0x08) >> 2) | (b2 & 0x01)
 	             | ((b3 & 0xF0) << 4)
-	             //~ | ((~b3 & 0x04) << 13)	// 6-button pad indicator
+	             | ((~b3 & 0x04) << 13)	// 6-button pad indicator
 	             ;
 
 	if (millis () - last_bit_reset >= 500) {
