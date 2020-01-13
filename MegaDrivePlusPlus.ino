@@ -136,7 +136,7 @@ enum __attribute__ ((__packed__)) PadButton {
 #define MODE_ROM_OFFSET 42
 
 // Time to wait after mode change before saving the new mode (milliseconds)
-#define MODE_SAVE_DELAY 3000L
+const unsigned long MODE_SAVE_DELAY = 3000L;
 
 // Force the reset line level when active. Undefine to enable auto-detection.
 //#define FORCE_RESET_ACTIVE_LEVEL LOW
@@ -161,13 +161,13 @@ enum __attribute__ ((__packed__)) PadButton {
 /* Presses of the reset button longer than this amount of milliseconds will
  * switch to the next mode, shorter presses will reset the console.
  */
-#define LONGPRESS_LEN 700
+const unsigned long LONGPRESS_LEN = 700U;
 
 // Debounce duration for the reset button
-#define DEBOUNCE_MS 20
+const unsigned long DEBOUNCE_RESET_MS = 20U;
 
 // Duration of the reset pulse (milliseconds)
-#define RESET_LEN 350
+const unsigned long RESET_LEN = 350U;
 
 /* Button presses will be considered valid only after it has been stable for
  * this amount of milliseconds
@@ -441,7 +441,7 @@ inline void handle_reset_button () {
 		// Reset debouncing timer
 		last_int = millis ();
 		debounce_level = reset_level;
-	} else if (millis () - last_int > DEBOUNCE_MS) {
+	} else if (millis () - last_int > DEBOUNCE_RESET_MS) {
 		// OK, button is stable, see if it has changed
 		if (reset_level != reset_inactive_level && !reset_pressed_before) {
 			// Button just pressed
