@@ -307,6 +307,8 @@ void rgb_led_off () {
 #ifdef MODE_LED_B_PIN
 	analogWrite (MODE_LED_B_PIN, c);
 #endif
+
+#endif  // ENABLE_MODE_LED_RGB
 }
 
 inline void save_mode () {
@@ -330,7 +332,6 @@ inline void save_mode () {
 
 		// Turn leds back on
 		rgb_led_update ();
-#endif  // ENABLE_MODE_LED_RGB
 
 #ifdef MODE_LED_SINGLE_PIN
 		// Make one long flash
