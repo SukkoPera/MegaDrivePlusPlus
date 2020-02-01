@@ -266,6 +266,9 @@ const byte mode_led_colors[][MODES_NO] = {
 };
 #endif
 
+// Combo detection enable flag
+boolean enabled = true;
+
 // Video mode
 VideoMode current_mode;
 unsigned long mode_last_changed_time = 0;
@@ -582,6 +585,31 @@ void setup () {
 	// Prepare to read pad
 	setup_pad ();
 
+	// FIXME: Show this on LCD somehow
+	if (fastDigitalRead (6) == LOW) {
+		// Disable all triggers from controller
+		debugln (F("Combo detection disabled"));
+		enabled = false;
+
+		// Blink to tell the user
+		for (byte i = 0; i < 3; ++i) {
+#ifdef ENABLE_MODE_LED_RGB
+			rgb_led_off ();
+#endif
+#ifdef MODE_LED_SINGLE_PIN
+			fastDigitalWrite (MODE_LED_SINGLE_PIN, LOW);
+#endif
+			delay (350);
+#ifdef ENABLE_MODE_LED_RGB
+			rgb_led_update ();
+#endif
+#ifdef MODE_LED_SINGLE_PIN
+			fastDigitalWrite (MODE_LED_SINGLE_PIN, HIGH);
+#endif
+			delay (250);
+		}
+	}
+
 	// We are ready to roll!
 	lcd_print_at (1, 0, F("     Ready!     "));
 	delay (1000);
@@ -806,7 +834,7 @@ inline void handle_pad () {
 	else
 		lcd_print_at (0, 6, "P:3B");
 
-	if ((pad_status & TRIGGER_COMBO) == TRIGGER_COMBO && millis () - last_combo_time > IGNORE_COMBO_MS) {
+	if (enabled && (pad_status & TRIGGER_COMBO) == TRIGGER_COMBO && millis () - last_combo_time > IGNORE_COMBO_MS) {
 		if ((pad_status & RESET_COMBO) == RESET_COMBO) {
 			debugln (F("Reset combo detected"));
 			reset_console ();
