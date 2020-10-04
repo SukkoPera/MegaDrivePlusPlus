@@ -122,11 +122,21 @@ enum __attribute__ ((__packed__)) PadButton {
  * ADVANCED SETTINGS
  ******************************************************************************/
 
+/* Enable fast control of I/O pins
+ *
+ * This enables very fast (2 clock cycles) control of I/O pins. The DigitalIO
+ * library by greiman is needed for this: https://github.com/greiman/DigitalIO.
+ *
+ * This should make startup faster and hopefully will solve problems with Virtua
+ * Racing or Ecco The Dolphin (See issue #5 on GitHub).
+ */
+//~ #define ENABLE_FAST_IO
+
 // Offset in the EEPROM at which the current mode should be saved
 #define MODE_ROM_OFFSET 42
 
 // Time to wait after mode change before saving the new mode (milliseconds)
-#define MODE_SAVE_DELAY 3000L
+const unsigned long MODE_SAVE_DELAY = 3000L;
 
 // Force the reset line level when active. Undefine to enable auto-detection.
 //#define FORCE_RESET_ACTIVE_LEVEL LOW
@@ -151,29 +161,23 @@ enum __attribute__ ((__packed__)) PadButton {
 /* Presses of the reset button longer than this amount of milliseconds will
  * switch to the next mode, shorter presses will reset the console.
  */
-#define LONGPRESS_LEN 700
+const unsigned long LONGPRESS_LEN = 700U;
 
 // Debounce duration for the reset button
-#define DEBOUNCE_MS 20
+const unsigned long DEBOUNCE_RESET_MS = 20U;
 
 // Duration of the reset pulse (milliseconds)
-#define RESET_LEN 350
+const unsigned long RESET_LEN = 350U;
 
-// Print the controller status on serial. Useful for debugging.
-#ifdef ENABLE_SERIAL_DEBUG
-#define DEBUG_PAD
-#endif
+/* Button presses will be considered valid only after it has been stable for
+ * this amount of milliseconds
+ */
+const unsigned long DEBOUNCE_BUTTONS_MS = 55U;
 
 
 /*******************************************************************************
  * DEBUGGING SUPPORT
  ******************************************************************************/
-
-/* Send debug messages to serial port. This requires Nick Gammon's
- * SendOnlySoftwareSerial library, get it at:
- * https://github.com/nickgammon/SendOnlySoftwareSerial
- */
-//#define ENABLE_SERIAL_DEBUG
 
 /* Show some information on a 16x2 LCD screen: how the reset line is detected,
  * what buttons are pressed, etc. The screen must be connected via i2c and will
@@ -183,10 +187,27 @@ enum __attribute__ ((__packed__)) PadButton {
  */
 //#define ENABLE_LCD
 
+/* Send debug messages to serial port. This requires Nick Gammon's
+ * SendOnlySoftwareSerial library, get it at:
+ * https://github.com/nickgammon/SendOnlySoftwareSerial
+ */
+//#define ENABLE_SERIAL_DEBUG
+
+// Print the controller status on serial. Useful for debugging.
+//#define DEBUG_PAD
+
 /*******************************************************************************
  * END OF SETTINGS
  ******************************************************************************/
 
+
+#ifdef ENABLE_FAST_IO
+#include <DigitalIO.h>		// https://github.com/greiman/DigitalIO
+#else
+#define fastDigitalRead(x) digitalRead(x)
+#define fastDigitalWrite(x, y) digitalWrite(x, y)
+#define fastPinMode(x, y) pinMode(x, y)
+#endif
 
 #ifdef ENABLE_LCD
 	#include <LiquidCrystal_I2C.h>
@@ -206,8 +227,8 @@ enum __attribute__ ((__packed__)) PadButton {
 	#define lcd_clear() do {lcd.clear (); lcd.home ();} while (0)
 #else
 	#define lcd_start() do {} while (0)
-        #define lcd_print(...) do {} while (0)
-        #define lcd_print_at(row, col, ...) do {} while (0)
+	#define lcd_print(...) do {} while (0)
+	#define lcd_print_at(row, col, ...) do {} while (0)
 	#define lcd_clear() do {} while (0)
 #endif
 
@@ -220,9 +241,9 @@ enum __attribute__ ((__packed__)) PadButton {
 	#define debug(...) swSerial.print (__VA_ARGS__)
 	#define debugln(...) swSerial.println (__VA_ARGS__)
 #else
-	#define dstart(...)
-	#define debug(...)
-	#define debugln(...)
+	#define dstart(...) do {} while (0)
+	#define debug(...) do {} while (0)
+	#define debugln(...) do {} while (0)
 #endif
 
 #include <EEPROM.h>
@@ -244,6 +265,9 @@ const byte mode_led_colors[][MODES_NO] = {
 	MODE_LED_JAP_COLOR
 };
 #endif
+
+// Combo detection enable flag
+boolean enabled = true;
 
 // Video mode
 VideoMode current_mode;
@@ -283,6 +307,8 @@ void rgb_led_off () {
 #ifdef MODE_LED_B_PIN
 	analogWrite (MODE_LED_B_PIN, c);
 #endif
+
+#endif  // ENABLE_MODE_LED_RGB
 }
 
 inline void save_mode () {
@@ -306,13 +332,12 @@ inline void save_mode () {
 
 		// Turn leds back on
 		rgb_led_update ();
-#endif  // ENABLE_MODE_LED_RGB
 
 #ifdef MODE_LED_SINGLE_PIN
 		// Make one long flash
-		digitalWrite (MODE_LED_SINGLE_PIN, LOW);
+		fastDigitalWrite (MODE_LED_SINGLE_PIN, LOW);
 		delay (500);
-		digitalWrite (MODE_LED_SINGLE_PIN, HIGH);
+		fastDigitalWrite (MODE_LED_SINGLE_PIN, HIGH);
 #endif
 	}
 }
@@ -365,9 +390,9 @@ void flash_single_led () {
 	 * the worst case!
 	 */
 	for (byte i = 0; i < current_mode + 1; ++i) {
-		digitalWrite (MODE_LED_SINGLE_PIN, LOW);
+		fastDigitalWrite (MODE_LED_SINGLE_PIN, LOW);
 		delay (40);
-		digitalWrite (MODE_LED_SINGLE_PIN, HIGH);
+		fastDigitalWrite (MODE_LED_SINGLE_PIN, HIGH);
 		delay (80);
 	}
 #endif
@@ -384,18 +409,18 @@ void set_mode (VideoMode m, boolean save) {
 			m = EUR;
 			// Fall through
 		case EUR:
-			digitalWrite (VIDEOMODE_PIN, LOW);    // PAL 50Hz
-			digitalWrite (LANGUAGE_PIN, HIGH);    // ENG
+			fastDigitalWrite (VIDEOMODE_PIN, LOW);    // PAL 50Hz
+			fastDigitalWrite (LANGUAGE_PIN, HIGH);    // ENG
 			lcd_print_at (0, 13, F("EUR"));
 			break;
 		case USA:
-			digitalWrite (VIDEOMODE_PIN, HIGH);   // NTSC 60Hz
-			digitalWrite (LANGUAGE_PIN, HIGH);    // ENG
+			fastDigitalWrite (VIDEOMODE_PIN, HIGH);   // NTSC 60Hz
+			fastDigitalWrite (LANGUAGE_PIN, HIGH);    // ENG
 			lcd_print_at (0, 13, F("USA"));
 			break;
 		case JAP:
-			digitalWrite (VIDEOMODE_PIN, HIGH);   // NTSC 60Hz
-			digitalWrite (LANGUAGE_PIN, LOW);     // JAP
+			fastDigitalWrite (VIDEOMODE_PIN, HIGH);   // NTSC 60Hz
+			fastDigitalWrite (LANGUAGE_PIN, LOW);     // JAP
 			lcd_print_at (0, 13, F("JAP"));
 			break;
 	}
@@ -418,12 +443,12 @@ inline void handle_reset_button () {
 	static unsigned long last_int = 0, reset_press_start = 0;
 	static unsigned int hold_cycles = 0;
 
-	byte reset_level = digitalRead (RESET_IN_PIN);
+	byte reset_level = fastDigitalRead (RESET_IN_PIN);
 	if (reset_level != debounce_level) {
 		// Reset debouncing timer
 		last_int = millis ();
 		debounce_level = reset_level;
-	} else if (millis () - last_int > DEBOUNCE_MS) {
+	} else if (millis () - last_int > DEBOUNCE_RESET_MS) {
 		// OK, button is stable, see if it has changed
 		if (reset_level != reset_inactive_level && !reset_pressed_before) {
 			// Button just pressed
@@ -437,7 +462,7 @@ inline void handle_reset_button () {
 			}
 		} else {
 			// Button has not just been pressed/released
-			if (reset_level != reset_inactive_level && millis () % reset_press_start >= LONGPRESS_LEN * (hold_cycles + 1)) {
+			if (reset_level != reset_inactive_level && millis () - reset_press_start >= LONGPRESS_LEN * (hold_cycles + 1)) {
 				// Reset has been held for a while
 				debugln (F("Reset button held"));
 				++hold_cycles;
@@ -454,9 +479,9 @@ void reset_console () {
 
 	debugln (F("Resetting console"));
 
-	digitalWrite (RESET_OUT_PIN, !reset_inactive_level);
+	fastDigitalWrite (RESET_OUT_PIN, !reset_inactive_level);
 	delay (RESET_LEN);
-	digitalWrite (RESET_OUT_PIN, reset_inactive_level);
+	fastDigitalWrite (RESET_OUT_PIN, reset_inactive_level);
 
 	lcd_print_at (1, 0, F("                "));
 }
@@ -468,8 +493,8 @@ void setup () {
 	 * the rest later.
 	 */
 	noInterrupts ();
-	pinMode (VIDEOMODE_PIN, OUTPUT);
-	pinMode (LANGUAGE_PIN, OUTPUT);
+	fastPinMode (VIDEOMODE_PIN, OUTPUT);
+	fastPinMode (LANGUAGE_PIN, OUTPUT);
 	current_mode = static_cast<VideoMode> (EEPROM.read (MODE_ROM_OFFSET));
 	debug (F("Loaded video mode from EEPROM: "));
 	debugln (current_mode);
@@ -501,8 +526,8 @@ void setup () {
 #ifndef FORCE_RESET_ACTIVE_LEVEL
 	// Let things settle down and then sample the reset line
 	delay (100);
-	pinMode (RESET_IN_PIN, INPUT_PULLUP);
-	reset_inactive_level = digitalRead (RESET_IN_PIN);
+	fastPinMode (RESET_IN_PIN, INPUT_PULLUP);
+	reset_inactive_level = fastDigitalRead (RESET_IN_PIN);
 	debug (F("Reset line is "));
 	debug (reset_inactive_level ? F("HIGH") : F("LOW"));
 	debugln (F(" at startup"));
@@ -520,36 +545,36 @@ void setup () {
 
 	if (reset_inactive_level == LOW) {
 		// No need for pull-up
-		pinMode (RESET_IN_PIN, INPUT);
+		fastPinMode (RESET_IN_PIN, INPUT);
 #ifdef FORCE_RESET_ACTIVE_LEVEL   // If this is not defined pull-up was already enabled above
 	} else {
-		pinMode (RESET_IN_PIN, INPUT_PULLUP);
+		fastPinMode (RESET_IN_PIN, INPUT_PULLUP);
 #endif
 	}
 
 	// Reset console so that it picks up the new mode/lang
-	pinMode (RESET_OUT_PIN, OUTPUT);
+	fastPinMode (RESET_OUT_PIN, OUTPUT);
 	reset_console ();
 
 	// Setup leds
 #ifdef MODE_LED_R_PIN
-	pinMode (MODE_LED_R_PIN, OUTPUT);
+	fastPinMode (MODE_LED_R_PIN, OUTPUT);
 #endif
 
 #ifdef MODE_LED_G_PIN
-	pinMode (MODE_LED_G_PIN, OUTPUT);
+	fastPinMode (MODE_LED_G_PIN, OUTPUT);
 #endif
 
 #ifdef MODE_LED_B_PIN
-	pinMode (MODE_LED_B_PIN, OUTPUT);
+	fastPinMode (MODE_LED_B_PIN, OUTPUT);
 #endif
 
 #ifdef MODE_LED_SINGLE_PIN
-	pinMode (MODE_LED_SINGLE_PIN, OUTPUT);
+	fastPinMode (MODE_LED_SINGLE_PIN, OUTPUT);
 #endif
 
 #ifdef PAD_LED_PIN
-	pinMode (PAD_LED_PIN, OUTPUT);
+	fastPinMode (PAD_LED_PIN, OUTPUT);
 #endif
 
 	/* Do this again so that leds and LCD get set properly: when we did it
@@ -561,24 +586,50 @@ void setup () {
 	// Prepare to read pad
 	setup_pad ();
 
+	// FIXME: Show this on LCD somehow
+	if (fastDigitalRead (6) == LOW) {
+		// Disable all triggers from controller
+		debugln (F("Combo detection disabled"));
+		enabled = false;
+
+		// Blink to tell the user
+		for (byte i = 0; i < 3; ++i) {
+#ifdef ENABLE_MODE_LED_RGB
+			rgb_led_off ();
+#endif
+#ifdef MODE_LED_SINGLE_PIN
+			fastDigitalWrite (MODE_LED_SINGLE_PIN, LOW);
+#endif
+			delay (350);
+#ifdef ENABLE_MODE_LED_RGB
+			rgb_led_update ();
+#endif
+#ifdef MODE_LED_SINGLE_PIN
+			fastDigitalWrite (MODE_LED_SINGLE_PIN, HIGH);
+#endif
+			delay (250);
+		}
+	}
+
 	// We are ready to roll!
 	lcd_print_at (1, 0, F("     Ready!     "));
 	delay (1000);
 	lcd_print_at (1, 0, F("                "));
+
+	debugln (F("Ready!"));
 }
 
-inline void setup_pad () {
-	// Set port directions: All button lines are INPUTs
-	pinMode (0, INPUT);
-	pinMode (2, INPUT);
-	pinMode (3, INPUT);
-	pinMode (4, INPUT);
-	pinMode (5, INPUT);
-	pinMode (6, INPUT);
-	pinMode (7, INPUT);
-
-	// The SIGNALLING line is an output
-	//~ pinMode (12, OUTPUT);
+void setup_pad () {
+	/* Set port directions: All button lines are INPUTs
+	 * (Commented out since INPUT is the default state of pins at reset)
+	 */
+	//~ fastPinMode (0, INPUT);
+	//~ fastPinMode (2, INPUT);
+	//~ fastPinMode (3, INPUT);
+	//~ fastPinMode (4, INPUT);
+	//~ fastPinMode (5, INPUT);
+	//~ fastPinMode (6, INPUT);
+	//~ fastPinMode (7, INPUT);
 
 	/* Enable interrupts: we can't use attachInterrupt() here, since our ISR is
 	 * going to be bare
@@ -595,10 +646,42 @@ void clear_pad () {
 	g_buttons_1 = 0xFF;
 	g_buttons_2 = 0xFF;
 	g_buttons_3 = 0xFF;
+
+	/* This also looks like a good place to initialize the controller snooping
+	 * state machine
+	 */
+	volatile byte *state = &GPIOR2;
+	*state = 0;			// i.e.: PS_INIT (defined in readpad.S)
 }
 
 /******************************************************************************/
 
+
+/* Makes sure that the same button/combo has been pressed steadily for some
+ * time.
+ */
+word debounce_buttons (word buttons) {
+	static word currentButtons = 0;
+	static word oldButtons = 0;
+	static unsigned long pressedOn = 0;
+
+	word ret = currentButtons;
+
+	if (buttons == oldButtons) {
+		if (millis () - pressedOn > DEBOUNCE_BUTTONS_MS) {
+			// Same combo held long enough
+			ret = currentButtons = buttons;
+		} else {
+			// Combo held not long enough (yet)
+		}
+	} else {
+		// Buttons bouncing
+		oldButtons = buttons;
+		pressedOn = millis ();
+	}
+
+	return ret;
+}
 
 /* The basic idea here is to make up a word (i.e.: 2 bytes) where each bit
  * represents the state of a button, with 1 meaning pressed, for commodity's
@@ -607,7 +690,10 @@ void clear_pad () {
 word read_pad () {
 	static unsigned long last_bit_reset = 0;
 
-	// Invert all bits, since we want to use 1 for pressed
+	/* Invert all bits, since we want to use 1 for pressed
+	 *
+	 * Note that bit 2 in all of these is the SELECT line.
+	 */
 	byte b1 = ~g_buttons_1;     // Select HIGH......: UDLRBxxC
 	byte b2 = ~g_buttons_2;     // Select LOW.......: UDxxAxxS
 	byte b3 = ~g_buttons_3;     // Select PULSE-3...: ZYXMxxxx
@@ -617,24 +703,31 @@ word read_pad () {
 	 * spurious data from b3, i.e.: Keeping X pressed reports LEFT, Y reports
 	 * DOWN, etc... This way we restrict the problem to X and MODE.
 	 *
-	 * It would be great to eliminate the problem completely, but we still haven't
-	 * found a way :(.
+	 * It would be great to eliminate the problem completely, but we still
+	 * haven't found a way :(.
 	 */
 	word buttons = (b1 & 0x38) | ((b1 & 0x01) << 2)
 	             | (b2 & 0xC0) | ((b2 & 0x08) >> 2) | (b2 & 0x01)
 	             | ((b3 & 0xF0) << 4)
-	             | ((~b3 & 0x04) << 13)	// 6-button pad indicator
 	             ;
 
-	if (millis () - last_bit_reset >= 500) {
-		/* Set bit 2 of g_buttons_3 to 0. Since g_buttons_3 is only
-		 * set by 6-button pads, and since that bit will always read as
-		 * HIGH (it's the SELECT line), we can use it as a 6-button pad
+	if ((g_buttons_3 & 0x04) || (last_bit_reset != 0 && millis () - last_bit_reset < 500))	{
+		/* g_buttons_3 is only set by 6-button pads. Since bit 2 will always
+		 * read as HIGH (it's the SELECT line), we can use it as a 6-button pad
 		 * indicator
 		 */
-		g_buttons_3 &= ~(1 << 2);
+		buttons |= MD_PAD_6BTN;
 
-		last_bit_reset = millis ();
+		if (millis () - last_bit_reset >= 500) {
+			/* Set bit 2 of g_buttons_3 to 0. Since g_buttons_3 is only
+			 * set by 6-button pads, and since that bit will always read as
+			 * HIGH (it's the SELECT line), we can use it as a 6-button pad
+			 * indicator
+			 */
+			g_buttons_3 &= ~(1 << 2);
+
+			last_bit_reset = millis ();
+		}
 	}
 
 	return buttons;
@@ -647,9 +740,10 @@ inline void handle_pad () {
 	static unsigned long last_combo_time = 0;
 
 	word pad_status = read_pad ();
+	pad_status = debounce_buttons (pad_status);
 
 #ifdef PAD_LED_PIN
-	digitalWrite (PAD_LED_PIN, (pad_status & ~MD_PAD_6BTN) != 0);
+	fastDigitalWrite (PAD_LED_PIN, (pad_status & ~MD_PAD_6BTN) != 0);
 #endif
 
 #ifdef DEBUG_PAD
@@ -741,7 +835,7 @@ inline void handle_pad () {
 	else
 		lcd_print_at (0, 6, "P:3B");
 
-	if ((pad_status & TRIGGER_COMBO) == TRIGGER_COMBO && millis () - last_combo_time > IGNORE_COMBO_MS) {
+	if (enabled && (pad_status & TRIGGER_COMBO) == TRIGGER_COMBO && millis () - last_combo_time > IGNORE_COMBO_MS) {
 		if ((pad_status & RESET_COMBO) == RESET_COMBO) {
 			debugln (F("Reset combo detected"));
 			reset_console ();
