@@ -68,14 +68,25 @@
  *   connected to the onboard Serial <-> USB converter on Arduino boards.
  */
 
+//#define OVERCLOCK
+
 #define RESET_IN_PIN A1
 #define RESET_OUT_PIN A0
 #define VIDEOMODE_PIN A2
 #define LANGUAGE_PIN A3
+
+#ifdef OVERCLOCK
+
+#define DEBUG_LED 9
+
+#else
+
 #define MODE_LED_R_PIN 9          // PWM
 #define MODE_LED_G_PIN 10         // PWM
 #define MODE_LED_B_PIN 11         // PWM
 #define PAD_LED_PIN LED_BUILTIN
+
+#endif
 
 
 /*******************************************************************************
@@ -200,6 +211,30 @@ const unsigned long DEBOUNCE_BUTTONS_MS = 55U;
  * END OF SETTINGS
  ******************************************************************************/
 
+#ifdef OVERCLOCK
+
+#include <SPI.h>
+
+const int SINE = 0x2000;
+const int SQUARE = 0x2028;
+const int TRIANGLE = 0x2002;
+
+// internal reference
+// AD9833 25Mhz == 25000000.0
+// AD9834 75Mhz == 75000000.0
+const float refFreq = 75000000.0;
+
+const int FSYNC = 10;                        // Standard SPI pins for the AD9833/4 waveform generators.
+const int CLK = 13;
+const int DATA = 11;
+
+const unsigned long freq_step =   500000;
+const unsigned long min_freq  =  8000000;               // Set min frequency. 8Mhz
+const unsigned long max_freq  = 12500000;               // Set max frequency. 12.5Mhz
+
+unsigned long freq = 8000000;               // Set initial frequency.
+
+#endif
 
 #ifdef ENABLE_FAST_IO
 #include <DigitalIO.h>		// https://github.com/greiman/DigitalIO
@@ -486,12 +521,29 @@ void reset_console () {
 	lcd_print_at (1, 0, F("                "));
 }
 
+#ifdef OVERCLOCK
+
+void reset();
+void setFrequency(long frequency, int Waveform);
+void WriteRegister(int dat);
+
+#endif
+
 void setup () {
 	/* Init video mode: We do this as soon as possible since the MegaDrive's
 	 * reset line seems to be edge-triggered, so we cannot hold the console
 	 * in the reset state while we are setting up stuff. We'll take care of
 	 * the rest later.
 	 */
+#ifdef OVERCLOCK
+  SPI.begin();
+  delay(50);
+  AD9833reset();
+  delay(50);
+  AD9833setFrequency(freq, TRIANGLE);
+  fastPinMode(DEBUG_LED, OUTPUT);
+  fastDigitalWrite(DEBUG_LED, HIGH);
+#endif
 	noInterrupts ();
 	fastPinMode (VIDEOMODE_PIN, OUTPUT);
 	fastPinMode (LANGUAGE_PIN, OUTPUT);
@@ -859,9 +911,94 @@ inline void handle_pad () {
 			set_mode (JAP, true);
 			last_combo_time = millis ();
 #endif
-		}
-	}
+#ifdef FREQ_DOWN_COMBO
+    } else if ((pad_status & FREQ_UP_COMBO) == FREQ_UP_COMBO) {
+
+      fastDigitalWrite (DEBUG_LED, LOW);
+      delay (100);
+      fastDigitalWrite (DEBUG_LED, HIGH);
+      delay (100);
+      debugln (F("rise the cpu clock 0.5 Mhz"));
+      freq -= freq_step;
+      if (freq <= min_freq) {
+         fastDigitalWrite (DEBUG_LED, LOW);
+        delay (100);
+        fastDigitalWrite (DEBUG_LED, HIGH);
+        delay (100);
+        freq = min_freq;
+      }
+      AD9833setFrequency(freq, SQUARE);
+      last_combo_time = millis();
+#endif
+#ifdef FREQ_UP_COMBO
+    } else if ((pad_status & FREQ_DOWN_COMBO) == FREQ_DOWN_COMBO) {
+
+      fastDigitalWrite (DEBUG_LED, LOW);
+      delay (100);
+      fastDigitalWrite (DEBUG_LED, HIGH);
+      delay (100);
+      debugln (F("low the cpu clock 0.5 Mhz"));
+      freq += freq_step;
+      if (freq >= max_freq) {
+        fastDigitalWrite (DEBUG_LED, LOW);
+        delay (100);
+        fastDigitalWrite (DEBUG_LED, HIGH);
+        delay (100);
+        freq = max_freq;
+      }
+      AD9833setFrequency(freq, SQUARE);
+      last_combo_time = millis();
+#endif
+    }
+  }
 }
+
+// more details and sources for the AD9833 Function generator
+// http://www.vwlowen.co.uk/arduino/AD9833-waveform-generator/AD9833-waveform-generator.htm
+
+#ifdef OVERCLOCK
+
+// AD9833 documentation advises a 'Reset' on first applying power.
+void reset() {
+  WriteRegister(0x100);   // Write '1' to AD9833 Control register bit D8.
+  delay(10);
+}
+
+
+// Set the frequency and waveform registers in the AD9833/4.
+void setFrequency(long frequency, int Waveform) {
+
+  long FreqWord = (frequency * pow(2, 28)) / refFreq;
+
+  int MSB = (int)((FreqWord & 0xFFFC000) >> 14);    //Only lower 14 bits are used for data
+  int LSB = (int)(FreqWord & 0x3FFF);
+
+  //Set control bits 15 ande 14 to 0 and 1, respectively, for frequency register 0
+  LSB |= 0x4000;
+  MSB |= 0x4000;
+
+  WriteRegister(0x2100);
+  WriteRegister(LSB);                  // Write lower 16 bits to AD9833 registers
+  WriteRegister(MSB);                  // Write upper 16 bits to AD9833 registers.
+  WriteRegister(0xC000);               // Phase register
+  WriteRegister(Waveform);             // Exit & Reset to SINE, SQUARE or TRIANGLE
+}
+
+void writeRegister(int dat) {
+
+  // Display and AD9833 use different SPI MODES so it has to be set for the AD9833 here.
+  SPI.setDataMode(SPI_MODE2);
+
+  digitalWrite(FSYNC, LOW);           // Set FSYNC low before writing to AD9833 registers
+  delayMicroseconds(10);              // Give AD9833 time to get ready to receive data.
+
+  SPI.transfer(highByte(dat));        // Each AD9833 register is 32 bits wide and each 16
+  SPI.transfer(lowByte(dat));         // bits has to be transferred as 2 x 8-bit bytes.
+
+  digitalWrite(FSYNC, HIGH);          //Write done. Set FSYNC high
+}
+
+#endif
 
 void loop () {
 	handle_reset_button ();
