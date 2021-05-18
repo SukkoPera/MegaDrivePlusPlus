@@ -123,6 +123,13 @@ enum __attribute__ ((__packed__)) PadButton {
  */
 #define RESET_COMBO (MD_BTN_A | MD_BTN_C)
 
+#ifdef OVERCLOCK
+
+#define FREQ_DOWN_COMBO MD_BTN_A
+#define FREQ_UP_COMBO MD_BTN_C
+
+#endif
+
 // Region/video mode combos
 #define EUR_COMBO MD_BTN_DOWN
 #define USA_COMBO MD_BTN_RIGHT
