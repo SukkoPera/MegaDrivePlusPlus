@@ -229,7 +229,7 @@ const int TRIANGLE = 0x2002;
 // internal reference
 // AD9833 25Mhz == 25000000.0
 // AD9834 75Mhz == 75000000.0
-const float refFreq = 75000000.0;
+const float refFreq = 25000000.0;
 
 const int FSYNC = 10;                        // Standard SPI pins for the AD9833/4 waveform generators.
 const int CLK = 13;
@@ -530,9 +530,9 @@ void reset_console () {
 
 #ifdef OVERCLOCK
 
-void reset();
-void setFrequency(long frequency, int Waveform);
-void WriteRegister(int dat);
+void AD9833reset();
+void AD9833setFrequency(long frequency, int Waveform);
+void AD9833writeRegister(int dat);
 
 #endif
 
@@ -547,7 +547,7 @@ void setup () {
   delay(50);
   AD9833reset();
   delay(50);
-  AD9833setFrequency(freq, TRIANGLE);
+  AD9833setFrequency(freq, SQUARE);
   fastPinMode(DEBUG_LED, OUTPUT);
   fastDigitalWrite(DEBUG_LED, HIGH);
 #endif
@@ -966,14 +966,14 @@ inline void handle_pad () {
 #ifdef OVERCLOCK
 
 // AD9833 documentation advises a 'Reset' on first applying power.
-void reset() {
-  WriteRegister(0x100);   // Write '1' to AD9833 Control register bit D8.
+void AD9833reset() {
+  AD9833writeRegister(0x100);   // Write '1' to AD9833 Control register bit D8.
   delay(10);
 }
 
 
 // Set the frequency and waveform registers in the AD9833/4.
-void setFrequency(long frequency, int Waveform) {
+void AD9833setFrequency(long frequency, int Waveform) {
 
   long FreqWord = (frequency * pow(2, 28)) / refFreq;
 
@@ -984,14 +984,14 @@ void setFrequency(long frequency, int Waveform) {
   LSB |= 0x4000;
   MSB |= 0x4000;
 
-  WriteRegister(0x2100);
-  WriteRegister(LSB);                  // Write lower 16 bits to AD9833 registers
-  WriteRegister(MSB);                  // Write upper 16 bits to AD9833 registers.
-  WriteRegister(0xC000);               // Phase register
-  WriteRegister(Waveform);             // Exit & Reset to SINE, SQUARE or TRIANGLE
+  AD9833writeRegister(0x2100);
+  AD9833writeRegister(LSB);                  // Write lower 16 bits to AD9833 registers
+  AD9833writeRegister(MSB);                  // Write upper 16 bits to AD9833 registers.
+  AD9833writeRegister(0xC000);               // Phase register
+  AD9833writeRegister(Waveform);             // Exit & Reset to SINE, SQUARE or TRIANGLE
 }
 
-void writeRegister(int dat) {
+void AD9833writeRegister(int dat) {
 
   // Display and AD9833 use different SPI MODES so it has to be set for the AD9833 here.
   SPI.setDataMode(SPI_MODE2);
