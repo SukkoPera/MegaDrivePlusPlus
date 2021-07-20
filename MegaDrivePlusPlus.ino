@@ -68,7 +68,7 @@
  *   connected to the onboard Serial <-> USB converter on Arduino boards.
  */
 
-//#define OVERCLOCK
+#define OVERCLOCK
 
 #define RESET_IN_PIN A1
 #define RESET_OUT_PIN A0
@@ -236,10 +236,10 @@ const int CLK = 13;
 const int DATA = 11;
 
 const unsigned long freq_step =   500000;
-const unsigned long min_freq  =  8000000;               // Set min frequency. 8Mhz
+const unsigned long min_freq  =  7000000;               // Set min frequency. 8Mhz
 const unsigned long max_freq  = 12500000;               // Set max frequency. 12.5Mhz
 
-unsigned long freq = 8000000;               // Set initial frequency.
+unsigned long freq = 9000000;               // Set initial frequency.
 
 #endif
 
@@ -920,18 +920,15 @@ inline void handle_pad () {
 #endif
 #ifdef FREQ_DOWN_COMBO
     } else if ((pad_status & FREQ_UP_COMBO) == FREQ_UP_COMBO) {
-
       fastDigitalWrite (DEBUG_LED, LOW);
       delay (100);
       fastDigitalWrite (DEBUG_LED, HIGH);
-      delay (100);
       debugln (F("rise the cpu clock 0.5 Mhz"));
       freq -= freq_step;
-      if (freq <= min_freq) {
-         fastDigitalWrite (DEBUG_LED, LOW);
+      if (freq < min_freq) {
+        fastDigitalWrite (DEBUG_LED, LOW);
         delay (100);
         fastDigitalWrite (DEBUG_LED, HIGH);
-        delay (100);
         freq = min_freq;
       }
       AD9833setFrequency(freq, SQUARE);
@@ -939,18 +936,15 @@ inline void handle_pad () {
 #endif
 #ifdef FREQ_UP_COMBO
     } else if ((pad_status & FREQ_DOWN_COMBO) == FREQ_DOWN_COMBO) {
-
       fastDigitalWrite (DEBUG_LED, LOW);
       delay (100);
       fastDigitalWrite (DEBUG_LED, HIGH);
-      delay (100);
       debugln (F("low the cpu clock 0.5 Mhz"));
       freq += freq_step;
-      if (freq >= max_freq) {
+      if (freq > max_freq) {
         fastDigitalWrite (DEBUG_LED, LOW);
         delay (100);
         fastDigitalWrite (DEBUG_LED, HIGH);
-        delay (100);
         freq = max_freq;
       }
       AD9833setFrequency(freq, SQUARE);
