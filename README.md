@@ -18,12 +18,14 @@ MegaDrive++ has the following features:
 - Even though default settings are recommended, **everything can be customized** to taste.
 - Last but not least, it is **Open Source and Free Software**!
 
-### Branches
+### Branches & Forks
 If you were a MegaDrive++ user before May 2019, please note that a few things have changed:
 - The old *6button*/*lcd_support* branch has become the *master* branch: **this is now the recommended version** to use and the only supported hardware is the Arduino Nano.
 - The old *master* branch has become the *legacy* branch: this is only kept for reference, it is no longer supported and won't get any updates in the future.
 
 [See this](https://github.com/SukkoPera/MegaDrivePlusPlus/wiki/Legacy-Branch) for the rationale behind this change.
+
+If you are interested in controlling an overclock mod through your controller, please check out [this PR](https://github.com/SukkoPera/MegaDrivePlusPlus/pull/23) and [TurBoss's fork](https://github.com/TurBoss/MegaDrivePlusPlus/).
 
 ### Installation
 If you are interested in modding your console with MegaDrive++, please [head to the wiki](https://github.com/SukkoPera/MegaDrivePlusPlus/wiki). There you will find full instructions about what to buy, how to compile MegaDrive++ and how to wire it in a few different Mega Drive/Genesis models that were sold.
