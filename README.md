@@ -44,9 +44,6 @@ If you want to support the development of this project, buy me a coffee:
 
 <a href='https://ko-fi.com/L3L0U18L' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://az743702.vo.msecnd.net/cdn/kofi2.png?v=2' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
 
-### Get Help
-If you need help or have questions, you can join [the official Telegram group](https://t.me/joinchat/HUHdWBC9J9JnYIrvTYfZmg).
-
 ### Thanks
 - D4s/Seb for their work on the original mod that inspired this project.
 - All the users who have contributed testing games or suggesting ideas for improvement.
