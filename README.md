@@ -1,7 +1,7 @@
-## MegaDrive++
+# MegaDrive++
 MegaDrive++ is a modchip for the Sega Mega Drive (AKA Genesis) with Region switching, 50/60 Hz toggling and In-Game-Reset (IGR) functionalities.
 
-### Features
+## Features
 MegaDrive++ has the following features:
 
 - **EUR/USA/JAP mode switching**: this effectively **makes your console universal**, allowing it to **bypass region checks** and to **run all games** without resorting to an adapter.
@@ -18,7 +18,7 @@ MegaDrive++ has the following features:
 - Even though default settings are recommended, **everything can be customized** to taste.
 - Last but not least, it is **Open Source and Free Software**!
 
-### Branches & Forks
+## Branches & Forks
 If you were a MegaDrive++ user before May 2019, please note that a few things have changed:
 - The old *6button*/*lcd_support* branch has become the *master* branch: **this is now the recommended version** to use and the only supported hardware is the Arduino Nano.
 - The old *master* branch has become the *legacy* branch: this is only kept for reference, it is no longer supported and won't get any updates in the future.
@@ -27,11 +27,11 @@ If you were a MegaDrive++ user before May 2019, please note that a few things ha
 
 If you are interested in controlling an overclock mod through your controller, please check out [this PR](https://github.com/SukkoPera/MegaDrivePlusPlus/pull/23) and [TurBoss's fork](https://github.com/TurBoss/MegaDrivePlusPlus/).
 
-### Installation
+## Installation
 If you are interested in modding your console with MegaDrive++, please [head to the wiki](https://github.com/SukkoPera/MegaDrivePlusPlus/wiki). There you will find full instructions about what to buy, how to compile MegaDrive++ and how to wire it in a few different Mega Drive/Genesis models that were sold.
 
-### License
-MegaDrive++ is Copyright &copy; 2015-2019 by SukkoPera.
+## License
+MegaDrive++ is Copyright &copy; 2015-2024 by SukkoPera.
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
@@ -39,11 +39,15 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-### Support the Project
-If you want to support the development of this project, buy me a coffee:
+## Support the Project
+This project is "charityware": you owe nothing to me, but if you are using it and you are satisfied with it, please make a small donation (at least!) to a legitimate charity of some kind. Some ideas: research against cancer, International Red Cross, anything to help children or disabled people, planting trees, etc.
+
+If you really have no idea, buy me a coffee and I'll take care of it:
 
 <a href='https://ko-fi.com/L3L0U18L' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://az743702.vo.msecnd.net/cdn/kofi2.png?v=2' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
 
-### Thanks
+**Please consider the above MANDATORY in case you are making money with MegaDrive++ (selling pre-programmed chips, doing installations for others, etc.).**
+
+## Thanks
 - D4s/Seb for their work on the original mod that inspired this project.
 - All the users who have contributed testing games or suggesting ideas for improvement.
