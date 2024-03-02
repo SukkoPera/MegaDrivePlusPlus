@@ -1,7 +1,7 @@
 /*******************************************************************************
  * This file is part of MegaDrive++.                                           *
  *                                                                             *
- * Copyright (C) 2015-2019 by SukkoPera <software@sukkology.net>               *
+ * Copyright (C) 2015-2024 by SukkoPera <software@sukkology.net>               *
  *                                                                             *
  * MegaDrive++ is free software: you can redistribute it and/or modify         *
  * it under the terms of the GNU General Public License as published by        *
@@ -34,7 +34,7 @@
  *                    | [ ]V.ref     ___    SS/D10[X]~| [LED Green]
  *          Reset Out | [X]A0       / N \       D9[X]~| [LED Red]
  *           Reset In | [X]A1      /  A  \      D8[X] | [Single Pin Led]
- * JP3/4 (Video Mode) | [X]A2      \  N  /      D7[X] | Pad Port Pin 1
+ *     JP3/4 (Region) | [X]A2      \  N  /      D7[X] | Pad Port Pin 1
  *   JP1/2 (Language) | [X]A3       \_0_/       D6[X]~| Pad Port Pin 2
  *          [LCD SDA] | [X]A4/SDA               D5[X]~| Pad Port Pin 3
  *          [LCD SCL] | [X]A5/SCL               D4[X] | Pad Port Pin 4
@@ -42,8 +42,8 @@
  *                    | [ ]A7              INT0/D2[X] | Pad Port Pin 7
  *                +5V | [X]5V                  GND[X] | GND
  *                    | [ ]RST                 RST[ ] |
- *                    | [ ]GND   5V MOSI GND   TX1[ ] |
- *                    | [ ]Vin   [ ] [ ] [ ]   RX0[X] | Pad Port Pin 9
+ *                    | [ ]GND   5V MOSI GND   RX0[X] | Pad Port Pin 9
+ *                    | [ ]Vin   [ ] [ ] [ ]   TX1[ ] |
  *                    |          [ ] [ ] [ ]          |
  *                    |          MISO SCK RST         |
  *                    | NANO-V3                       |
@@ -68,14 +68,23 @@
  *   connected to the onboard Serial <-> USB converter on Arduino boards.
  */
 
-#define RESET_IN_PIN A1
-#define RESET_OUT_PIN A0
-#define VIDEOMODE_PIN A2
-#define LANGUAGE_PIN A3
-#define MODE_LED_R_PIN 9          // PWM
-#define MODE_LED_G_PIN 10         // PWM
-#define MODE_LED_B_PIN 11         // PWM
-#define PAD_LED_PIN LED_BUILTIN
+const byte PIN_UP = 7;
+const byte PIN_DOWN = 6;
+const byte PIN_LEFT = 5;
+const byte PIN_RIGHT = 4;
+const byte PIN_B_A = 3;
+const byte PIN_C_START = 0;
+const byte PIN_SELECT = 2;
+const byte PIN_RESET_IN = A1;
+const byte PIN_RESET_OUT = A0;
+const byte PIN_REGION = A2;
+const byte PIN_LANGUAGE = A3;
+const byte PIN_PAD_LED = LED_BUILTIN;
+
+// These are kept as #defines so that any can be disabled if unused
+#define PIN_REGION_LED_R 9          // PWM
+#define PIN_REGION_LED_G 10         // PWM
+#define PIN_REGION_LED_B 11         // PWM
 
 
 /*******************************************************************************
@@ -83,22 +92,20 @@
  ******************************************************************************/
 
 // DON'T TOUCH THIS! Just look at it for the button names you can use below!
-enum __attribute__ ((__packed__)) PadButton {
-	MD_PAD_6BTN =  1 << 15,	// Not a button, set to 1 if pad is 6-button
+const word MD_PAD_6BTN  =  1 << 15;	// Not a button, set to 1 if pad is 6-button
 
-	MD_BTN_Z =     1 << 11,
-	MD_BTN_Y =     1 << 10,
-	MD_BTN_X =     1 << 9,
-	MD_BTN_MODE =  1 << 8,
-	MD_BTN_UP =    1 << 7,
-	MD_BTN_DOWN =  1 << 6,
-	MD_BTN_LEFT =  1 << 5,
-	MD_BTN_RIGHT = 1 << 4,
-	MD_BTN_B =     1 << 3,
-	MD_BTN_C =     1 << 2,
-	MD_BTN_A =     1 << 1,
-	MD_BTN_START = 1 << 0
-};
+const word MD_BTN_Z     = 1 << 11;
+const word MD_BTN_Y     = 1 << 10;
+const word MD_BTN_X     = 1 << 9;
+const word MD_BTN_MODE  = 1 << 8;
+const word MD_BTN_UP    = 1 << 7;
+const word MD_BTN_DOWN  = 1 << 6;
+const word MD_BTN_LEFT  = 1 << 5;
+const word MD_BTN_RIGHT = 1 << 4;
+const word MD_BTN_B     = 1 << 3;
+const word MD_BTN_C     = 1 << 2;
+const word MD_BTN_A     = 1 << 1;
+const word MD_BTN_START = 1 << 0;
 
 /* Button combo that enables the other combos.
  *
@@ -130,33 +137,36 @@ enum __attribute__ ((__packed__)) PadButton {
  * This should make startup faster and hopefully will solve problems with Virtua
  * Racing or Ecco The Dolphin (See issue #5 on GitHub).
  */
-//~ #define ENABLE_FAST_IO
-
-// Offset in the EEPROM at which the current mode should be saved
-#define MODE_ROM_OFFSET 42
-
-// Time to wait after mode change before saving the new mode (milliseconds)
-const unsigned long MODE_SAVE_DELAY = 3000L;
+//#define ENABLE_FAST_IO
 
 // Force the reset line level when active. Undefine to enable auto-detection.
 //#define FORCE_RESET_ACTIVE_LEVEL LOW
+
+// Offset in the EEPROM at which the current region should be saved
+#define REGION_ROM_OFFSET 42
+
+// Time to wait after region change before saving the new region (milliseconds)
+const unsigned long REGION_SAVE_DELAY = 3000L;
 
 /* Colors to use to indicate the video mode, in 8-bit RGB componentes. Unless
  * you really want weird colors, use only 0x00 (off) and 0xFF (on).
  *
  * Oh, and good luck trying to fit a 5mm RGB led in the MegaDrive ;).
  */
-#define MODE_LED_EUR_COLOR {0x00, 0xFF, 0x00}  // Green
-#define MODE_LED_USA_COLOR {0x00, 0x00, 0xFF}  // Blue
-#define MODE_LED_JAP_COLOR {0xFF, 0x00, 0x00}  // Red
+#define REGION_LED_EUR_COLOR {0x00, 0xFF, 0x00}  // Green
+#define REGION_LED_USA_COLOR {0x00, 0x00, 0xFF}  // Blue
+#define REGION_LED_JAP_COLOR {0xFF, 0x00, 0x00}  // Red
 
 // Define this if your led is common-anode, comment out for common-cathode
-//#define MODE_LED_COMMON_ANODE
+//#define REGION_LED_COMMON_ANODE
 
 /* Also indicate the video mode with a single led. It is blinked 1-3 times
- * according to which mode is set (1 is EUR, see enum VideoMode below).
+ * according to which mode is set (1 is EUR, see enum Region below).
  */
-#define MODE_LED_SINGLE_PIN 8
+#define PIN_REGION_LED_SINGLE 8
+
+// Undefine to remove support for RGB led
+#define ENABLE_REGION_LED_RGB  (defined PIN_REGION_LED_R || defined PIN_REGION_LED_G || defined PIN_REGION_LED_B)
 
 /* Presses of the reset button longer than this amount of milliseconds will
  * switch to the next mode, shorter presses will reset the console.
@@ -204,9 +214,10 @@ const unsigned long DEBOUNCE_BUTTONS_MS = 55U;
 #ifdef ENABLE_FAST_IO
 #include <DigitalIO.h>		// https://github.com/greiman/DigitalIO
 #else
-#define fastDigitalRead(x) digitalRead(x)
-#define fastDigitalWrite(x, y) digitalWrite(x, y)
-#define fastPinMode(x, y) pinMode(x, y)
+#define fastDigitalRead(pin) digitalRead(pin)
+#define fastDigitalWrite(pin, level) digitalWrite(pin, level)
+#define fastPinMode(pin, mode) pinMode(pin, mode)
+#define fastPinConfig(pin, mode, level) {pinMode(pin, mode); digitalWrite(pin, level);}
 #endif
 
 #ifdef ENABLE_LCD
@@ -248,30 +259,28 @@ const unsigned long DEBOUNCE_BUTTONS_MS = 55U;
 
 #include <EEPROM.h>
 
-enum __attribute__ ((__packed__)) VideoMode {
+enum class Region: uint8_t {
 	EUR,
 	USA,
 	JAP,
-	MODES_NO // Leave at end
 };
 
-// This will be handy
-#if (defined MODE_LED_R_PIN || defined MODE_LED_G_PIN || defined MODE_LED_B_PIN)
-	#define ENABLE_MODE_LED_RGB
+const byte REGIONS_NO = 3;
 
-const byte mode_led_colors[][MODES_NO] = {
-	MODE_LED_EUR_COLOR,
-	MODE_LED_USA_COLOR,
-	MODE_LED_JAP_COLOR
+#ifdef ENABLE_REGION_LED_RGB
+const byte region_led_colors[][REGIONS_NO] = {
+	REGION_LED_EUR_COLOR,
+	REGION_LED_USA_COLOR,
+	REGION_LED_JAP_COLOR
 };
 #endif
 
 // Combo detection enable flag
 boolean enabled = true;
 
-// Video mode
-VideoMode current_mode;
-unsigned long mode_last_changed_time = 0;
+// Region
+Region current_region;
+unsigned long region_last_changed_time = 0;
 
 // Reset level when NOT ACTIVE
 byte reset_inactive_level;
@@ -289,40 +298,40 @@ volatile byte g_buttons_2 = 0xFF;
 volatile byte g_buttons_3 = 0xFF;
 
 void rgb_led_off () {
-#ifdef ENABLE_MODE_LED_RGB
+#ifdef ENABLE_REGION_LED_RGB
 	byte c = 0;
 
 #ifdef RGB_LED_COMMON_ANODE
 	c = 255;
 #endif
 
-#ifdef MODE_LED_R_PIN
-	analogWrite (MODE_LED_R_PIN, c);
+#ifdef PIN_REGION_LED_R
+	analogWrite (PIN_REGION_LED_R, c);
 #endif
 
-#ifdef MODE_LED_G_PIN
-	analogWrite (MODE_LED_G_PIN, c);
+#ifdef PIN_REGION_LED_G
+	analogWrite (PIN_REGION_LED_G, c);
 #endif
 
-#ifdef MODE_LED_B_PIN
-	analogWrite (MODE_LED_B_PIN, c);
+#ifdef PIN_REGION_LED_B
+	analogWrite (PIN_REGION_LED_B, c);
 #endif
 
-#endif  // ENABLE_MODE_LED_RGB
+#endif  // ENABLE_REGION_LED_RGB
 }
 
-inline void save_mode () {
-	if (mode_last_changed_time > 0 && millis () - mode_last_changed_time >= MODE_SAVE_DELAY) {
-		debug (F("Saving video mode to EEPROM: "));
-		debugln (current_mode);
+inline void save_region () {
+	if (region_last_changed_time > 0 && millis () - region_last_changed_time >= REGION_SAVE_DELAY) {
+		debug (F("Saving region to EEPROM: "));
+		debugln (current_region);
 
-		byte saved_mode = EEPROM.read (MODE_ROM_OFFSET);
-		if (current_mode != saved_mode) {
-			EEPROM.write (MODE_ROM_OFFSET, static_cast<byte> (current_mode));
+		Region saved_region = static_cast<Region> (EEPROM.read (REGION_ROM_OFFSET));
+		if (current_region != saved_region) {
+			EEPROM.write (REGION_ROM_OFFSET, static_cast<byte> (current_region));
 		} else {
 			debugln (F("Mode unchanged, not saving"));
 		}
-		mode_last_changed_time = 0;    // Don't save again
+		region_last_changed_time = 0;    // Don't save again
 
 		// Blink led to tell the user that mode was saved
 		rgb_led_off ();
@@ -333,94 +342,94 @@ inline void save_mode () {
 		// Turn leds back on
 		rgb_led_update ();
 
-#ifdef MODE_LED_SINGLE_PIN
+#ifdef PIN_REGION_LED_SINGLE
 		// Make one long flash
-		fastDigitalWrite (MODE_LED_SINGLE_PIN, LOW);
+		fastDigitalWrite (PIN_REGION_LED_SINGLE, LOW);
 		delay (500);
-		fastDigitalWrite (MODE_LED_SINGLE_PIN, HIGH);
+		fastDigitalWrite (PIN_REGION_LED_SINGLE, HIGH);
 #endif
 	}
 }
 
-inline void change_mode (int increment) {
-	// This also loops in [0, MODES_NO) backwards
-	VideoMode new_mode = static_cast<VideoMode> ((current_mode + increment + MODES_NO) % MODES_NO);
-	set_mode (new_mode, true);
+inline void change_region (int increment) {
+	// This also loops in [0, REGIONS_NO) backwards
+	Region new_region = static_cast<Region> ((static_cast<byte> (current_region) + increment + REGIONS_NO) % REGIONS_NO);
+	set_region (new_region, true);
 }
 
-inline void next_mode () {
-	change_mode (+1);
+inline void next_region () {
+	change_region (+1);
 }
 
 void rgb_led_update () {
-#ifdef ENABLE_MODE_LED_RGB
-	const byte *colors = mode_led_colors[current_mode];
+#ifdef ENABLE_REGION_LED_RGB
+	const byte *colors = region_led_colors[static_cast<byte> (current_region)];
 	byte c;
 
-#ifdef MODE_LED_R_PIN
+#ifdef PIN_REGION_LED_R
 	c = colors[0];
-#ifdef MODE_LED_COMMON_ANODE
+#ifdef REGION_LED_COMMON_ANODE
 	c = 255 - c;
 #endif
-	analogWrite (MODE_LED_R_PIN, c);
+	analogWrite (PIN_REGION_LED_R, c);
 #endif
 
-#ifdef MODE_LED_G_PIN
+#ifdef PIN_REGION_LED_G
 	c = colors[1];
-#ifdef MODE_LED_COMMON_ANODE
+#ifdef REGION_LED_COMMON_ANODE
 	c = 255 - c;
 #endif
-	analogWrite (MODE_LED_G_PIN, c);
+	analogWrite (PIN_REGION_LED_G, c);
 #endif
 
-#ifdef MODE_LED_B_PIN
+#ifdef PIN_REGION_LED_B
 	c = colors[2];
-#ifdef MODE_LED_COMMON_ANODE
+#ifdef REGION_LED_COMMON_ANODE
 	c = 255 - c;
 #endif
-	analogWrite (MODE_LED_B_PIN, c);
+	analogWrite (PIN_REGION_LED_B, c);
 #endif
 
-#endif  // ENABLE_MODE_LED_RGB
+#endif  // ENABLE_REGION_LED_RGB
 }
 
 void flash_single_led () {
-#ifdef MODE_LED_SINGLE_PIN
+#ifdef PIN_REGION_LED_SINGLE
 	/* WARNING: This loop must be reasonably shorter than LONGPRESS_LEN in
 	 * the worst case!
 	 */
-	for (byte i = 0; i < current_mode + 1; ++i) {
-		fastDigitalWrite (MODE_LED_SINGLE_PIN, LOW);
+	for (byte i = 0; i < static_cast<byte> (current_region) + 1; ++i) {
+		fastDigitalWrite (PIN_REGION_LED_SINGLE, LOW);
 		delay (40);
-		fastDigitalWrite (MODE_LED_SINGLE_PIN, HIGH);
+		fastDigitalWrite (PIN_REGION_LED_SINGLE, HIGH);
 		delay (80);
 	}
 #endif
 }
 
-void set_mode (VideoMode m, boolean save) {
+void set_region (Region m, boolean save) {
 	switch (m) {
 		default:
 			// Invalid value
-			debug (F("ERROR: Tried to set invalid mode: "));
+			debug (F("ERROR: Tried to set invalid region: "));
 			debugln (m);
 
 			// Get back to something meaningful
-			m = EUR;
+			m = Region::EUR;
 			// Fall through
-		case EUR:
-			fastDigitalWrite (VIDEOMODE_PIN, LOW);    // PAL 50Hz
-			fastDigitalWrite (LANGUAGE_PIN, HIGH);    // ENG
+		case Region::EUR:
+			fastDigitalWrite (PIN_REGION, LOW);    // PAL 50Hz
+			fastDigitalWrite (PIN_LANGUAGE, HIGH);    // ENG
 			lcd_print_at (0, 13, F("EUR"));
 			break;
-		case USA:
-			fastDigitalWrite (VIDEOMODE_PIN, HIGH);   // NTSC 60Hz
-			fastDigitalWrite (LANGUAGE_PIN, HIGH);    // ENG
+		case Region::USA:
+			fastDigitalWrite (PIN_REGION, HIGH);   // NTSC 60Hz
+			fastDigitalWrite (PIN_LANGUAGE, HIGH);    // ENG
 			lcd_print_at (0, 13, F("USA"));
 			break;
-		case JAP:
-			fastDigitalWrite (VIDEOMODE_PIN, HIGH);   // NTSC 60Hz
-			fastDigitalWrite (LANGUAGE_PIN, LOW);     // JAP
+		case Region::JAP:
+			fastDigitalWrite (PIN_REGION, HIGH);   // NTSC 60Hz
+			fastDigitalWrite (PIN_LANGUAGE, LOW);     // JAP
 			lcd_print_at (0, 13, F("JAP"));
 			break;
 	}
@@ -428,12 +437,12 @@ void set_mode (VideoMode m, boolean save) {
 	// Update LCD only now, so that at startup mode is set ASAP
 	lcd_print_at (0, 11, F("M:"));
 
-	current_mode = m;
+	current_region = m;
 	rgb_led_update ();
 	flash_single_led ();
 
 	if (save) {
-		mode_last_changed_time = millis ();
+		region_last_changed_time = millis ();
 	}
 }
 
@@ -443,7 +452,7 @@ inline void handle_reset_button () {
 	static unsigned long last_int = 0, reset_press_start = 0;
 	static unsigned int hold_cycles = 0;
 
-	byte reset_level = fastDigitalRead (RESET_IN_PIN);
+	byte reset_level = fastDigitalRead (PIN_RESET_IN);
 	if (reset_level != debounce_level) {
 		// Reset debouncing timer
 		last_int = millis ();
@@ -466,7 +475,7 @@ inline void handle_reset_button () {
 				// Reset has been held for a while
 				debugln (F("Reset button held"));
 				++hold_cycles;
-				next_mode ();
+				next_region ();
 			}
 		}
 
@@ -479,26 +488,26 @@ void reset_console () {
 
 	debugln (F("Resetting console"));
 
-	fastDigitalWrite (RESET_OUT_PIN, !reset_inactive_level);
+	fastDigitalWrite (PIN_RESET_OUT, !reset_inactive_level);
 	delay (RESET_LEN);
-	fastDigitalWrite (RESET_OUT_PIN, reset_inactive_level);
+	fastDigitalWrite (PIN_RESET_OUT, reset_inactive_level);
 
 	lcd_print_at (1, 0, F("                "));
 }
 
 void setup () {
-	/* Init video mode: We do this as soon as possible since the MegaDrive's
+	/* Init region: We do this as soon as possible since the MegaDrive's
 	 * reset line seems to be edge-triggered, so we cannot hold the console
 	 * in the reset state while we are setting up stuff. We'll take care of
 	 * the rest later.
 	 */
 	noInterrupts ();
-	fastPinMode (VIDEOMODE_PIN, OUTPUT);
-	fastPinMode (LANGUAGE_PIN, OUTPUT);
-	current_mode = static_cast<VideoMode> (EEPROM.read (MODE_ROM_OFFSET));
+	fastPinMode (PIN_REGION, OUTPUT);
+	fastPinMode (PIN_LANGUAGE, OUTPUT);
+	current_region = static_cast<Region> (EEPROM.read (REGION_ROM_OFFSET));
 	debug (F("Loaded video mode from EEPROM: "));
-	debugln (current_mode);
-	set_mode (current_mode, false);		// Don't overwrite EEPROM
+	debugln (current_region);
+	set_region (current_region, false);		// Don't overwrite EEPROM
 	interrupts ();
 
 	// Pheeew, that was quick! Let's go on with the rest!
@@ -526,8 +535,8 @@ void setup () {
 #ifndef FORCE_RESET_ACTIVE_LEVEL
 	// Let things settle down and then sample the reset line
 	delay (100);
-	fastPinMode (RESET_IN_PIN, INPUT_PULLUP);
-	reset_inactive_level = fastDigitalRead (RESET_IN_PIN);
+	fastPinMode (PIN_RESET_IN, INPUT_PULLUP);
+	reset_inactive_level = fastDigitalRead (PIN_RESET_IN);
 	debug (F("Reset line is "));
 	debug (reset_inactive_level ? F("HIGH") : F("LOW"));
 	debugln (F(" at startup"));
@@ -545,67 +554,67 @@ void setup () {
 
 	if (reset_inactive_level == LOW) {
 		// No need for pull-up
-		fastPinMode (RESET_IN_PIN, INPUT);
+		fastPinMode (PIN_RESET_IN, INPUT);
 #ifdef FORCE_RESET_ACTIVE_LEVEL   // If this is not defined pull-up was already enabled above
 	} else {
-		fastPinMode (RESET_IN_PIN, INPUT_PULLUP);
+		fastPinMode (PIN_RESET_IN, INPUT_PULLUP);
 #endif
 	}
 
 	// Reset console so that it picks up the new mode/lang
-	fastPinMode (RESET_OUT_PIN, OUTPUT);
+	fastPinMode (PIN_RESET_OUT, OUTPUT);
 	reset_console ();
 
 	// Setup leds
-#ifdef MODE_LED_R_PIN
-	fastPinMode (MODE_LED_R_PIN, OUTPUT);
+#ifdef PIN_REGION_LED_R
+	fastPinMode (PIN_REGION_LED_R, OUTPUT);
 #endif
 
-#ifdef MODE_LED_G_PIN
-	fastPinMode (MODE_LED_G_PIN, OUTPUT);
+#ifdef PIN_REGION_LED_G
+	fastPinMode (PIN_REGION_LED_G, OUTPUT);
 #endif
 
-#ifdef MODE_LED_B_PIN
-	fastPinMode (MODE_LED_B_PIN, OUTPUT);
+#ifdef PIN_REGION_LED_B
+	fastPinMode (PIN_REGION_LED_B, OUTPUT);
 #endif
 
-#ifdef MODE_LED_SINGLE_PIN
-	fastPinMode (MODE_LED_SINGLE_PIN, OUTPUT);
+#ifdef PIN_REGION_LED_SINGLE
+	fastPinMode (PIN_REGION_LED_SINGLE, OUTPUT);
 #endif
 
-#ifdef PAD_LED_PIN
-	fastPinMode (PAD_LED_PIN, OUTPUT);
+#ifdef PIN_PAD_LED
+	fastPinMode (PIN_PAD_LED, OUTPUT);
 #endif
 
 	/* Do this again so that leds and LCD get set properly: when we did it
 	 * above the led pins had not been set in output mode and the LCD had
 	 * not been initialized yet.
 	 */
-	set_mode (current_mode, false);
+	set_region (current_region, false);
 
 	// Prepare to read pad
 	setup_pad ();
 
+	// If DOWN is pressed at startup, disable all combos
 	// FIXME: Show this on LCD somehow
-	if (fastDigitalRead (6) == LOW) {
-		// Disable all triggers from controller
+	if (fastDigitalRead (PIN_DOWN) == LOW) {
 		debugln (F("Combo detection disabled"));
 		enabled = false;
 
 		// Blink to tell the user
 		for (byte i = 0; i < 3; ++i) {
-#ifdef ENABLE_MODE_LED_RGB
+#ifdef ENABLE_REGION_LED_RGB
 			rgb_led_off ();
 #endif
-#ifdef MODE_LED_SINGLE_PIN
-			fastDigitalWrite (MODE_LED_SINGLE_PIN, LOW);
+#ifdef PIN_REGION_LED_SINGLE
+			fastDigitalWrite (PIN_REGION_LED_SINGLE, LOW);
 #endif
 			delay (350);
-#ifdef ENABLE_MODE_LED_RGB
+#ifdef ENABLE_REGION_LED_RGB
 			rgb_led_update ();
 #endif
-#ifdef MODE_LED_SINGLE_PIN
-			fastDigitalWrite (MODE_LED_SINGLE_PIN, HIGH);
+#ifdef PIN_REGION_LED_SINGLE
+			fastDigitalWrite (PIN_REGION_LED_SINGLE, HIGH);
 #endif
 			delay (250);
 		}
@@ -620,23 +629,23 @@ void setup () {
 }
 
 void setup_pad () {
-	/* Set port directions: All button lines are INPUTs
-	 * (Commented out since INPUT is the default state of pins at reset)
-	 */
-	//~ fastPinMode (0, INPUT);
-	//~ fastPinMode (2, INPUT);
-	//~ fastPinMode (3, INPUT);
-	//~ fastPinMode (4, INPUT);
-	//~ fastPinMode (5, INPUT);
-	//~ fastPinMode (6, INPUT);
-	//~ fastPinMode (7, INPUT);
+	// Set port directions: All button lines are INPUTs with pull-ups
+	fastPinConfig (PIN_UP, INPUT, 1);
+	fastPinConfig (PIN_DOWN, INPUT, 1);
+	fastPinConfig (PIN_LEFT, INPUT, 1);
+	fastPinConfig (PIN_RIGHT, INPUT, 1);
+	fastPinConfig (PIN_B_A, INPUT, 1);
+	fastPinConfig (PIN_C_START, INPUT, 1);
+	fastPinConfig (PIN_SELECT, INPUT, 1);
 
 	/* Enable interrupts: we can't use attachInterrupt() here, since our ISR is
 	 * going to be bare
 	 */
+	noInterrupts ();
 	EICRA |= (1 << ISC00);    // Trigger interrupt on CHANGE
+	EIFR |= (1 << INTF0);	  // Clear any pending interrupts
 	EIMSK |= (1 << INT0);     // Enable interrupt 0 (i.e.: on pin 2)
-	interrupts ();            // Enable all interrupts, probably redundant
+	interrupts ();
 }
 
 /* Clear the pad button registers. This is useful because during resets the
@@ -742,8 +751,8 @@ inline void handle_pad () {
 	word pad_status = read_pad ();
 	pad_status = debounce_buttons (pad_status);
 
-#ifdef PAD_LED_PIN
-	fastDigitalWrite (PAD_LED_PIN, (pad_status & ~MD_PAD_6BTN) != 0);
+#ifdef PIN_PAD_LED
+	fastDigitalWrite (PIN_PAD_LED, (pad_status & ~MD_PAD_6BTN) != 0);
 #endif
 
 #ifdef DEBUG_PAD
@@ -844,19 +853,19 @@ inline void handle_pad () {
 #ifdef EUR_COMBO
 		} else if ((pad_status & EUR_COMBO) == EUR_COMBO) {
 			debugln (F("EUR mode combo detected"));
-			set_mode (EUR, true);
+			set_region (Region::EUR, true);
 			last_combo_time = millis ();
 #endif
 #ifdef USA_COMBO
 		} else if ((pad_status & USA_COMBO) == USA_COMBO) {
 			debugln (F("USA mode combo detected"));
-			set_mode (USA, true);
+			set_region (Region::USA, true);
 			last_combo_time = millis ();
 #endif
 #ifdef JAP_COMBO
 		} else if ((pad_status & JAP_COMBO) == JAP_COMBO) {
 			debugln (F("JAP mode combo detected"));
-			set_mode (JAP, true);
+			set_region (Region::JAP, true);
 			last_combo_time = millis ();
 #endif
 		}
@@ -866,5 +875,5 @@ inline void handle_pad () {
 void loop () {
 	handle_reset_button ();
 	handle_pad ();
-	save_mode ();
+	save_region ();
 }
